@@ -101,6 +101,11 @@ class UpstoxProvider:
         self._request = requester
         self._instruments = None
 
+    def instrument_key(self, ticker):
+        if self._instruments is None:
+            self._instruments=self._request(INSTRUMENTS_URL)
+        return resolve_instrument(ticker,self._instruments)
+
     def frames(self, ticker, now):
         import pandas as pd
         if self._instruments is None:

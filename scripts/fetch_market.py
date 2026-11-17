@@ -51,6 +51,8 @@ def main():
             candles, daily = provider.frames(ticker, now)
             item = build_item(ticker, candles, daily, now)
             item.update(source=provider.name, adjustment=provider.adjustment)
+            if hasattr(provider,'instrument_key'):
+                item['instrument_key']=provider.instrument_key(ticker)
             items.append(item)
             print(f'{ticker}: candle ended {items[-1]["candle_end"]}')
         except Exception as exc:

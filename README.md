@@ -8,6 +8,21 @@ Upstox is the preferred market-data API. The repository is configured with `MARK
 
 Includes TradingView charts, an eight-company watchlist, NIFTY 50 / BANK NIFTY / SENSEX snapshots, exchange and signal filters, and EMA 9 / EMA 21 / Wilder RSI 14 observations. Demo mode is explicitly fictional and opt-in. No fake prices are shown as market data.
 
+## Personal live API quotes
+
+Open [Live API quotes](https://sevendreamzone1.github.io/market-pulse/live.html), or select **Live API quotes** in the dashboard header. This separate page connects from the browser directly to Upstox V3 WebSocket in LTPC mode. It shows last price, change from previous close, exchange trade time, and freshness. It includes the three indices, available watchlist instrument keys, and current option-contract keys from the published snapshot. It does not recalculate strategy recommendations from ticks; those remain completed-candle snapshots.
+
+Choose one connection method:
+
+1. **Access token:** enter your own current Upstox access token (not the client ID/API key). The page sends it directly to `https://api.upstox.com/v3/feed/market-data-feed/authorize`. Success returns a one-use socket URL. Browser authorization depends on Upstox's CORS policy.
+2. **One-time WebSocket URL:** if browser authorization is blocked, obtain `authorized_redirect_uri` from the [official authorize endpoint](https://upstox.com/developer/api-documentation/get-market-data-feed-authorize-v3/) in your own API client and enter it in the second mode. It is a private, one-use credential, not a public shareable link. Only secure WebSocket hosts below `.upstox.com` are accepted.
+
+The token is used for that connection attempt and cleared from the form; it is never persisted in browser storage, cookies, source, or GitHub. It is sent only to Upstox. This page has no third-party scripts or fonts and uses a restrictive CSP. Existing GitHub Actions secrets cannot be read back by this public frontend. Every viewer must authorize their own session; this does not expose a shared account feed publicly.
+
+The broker's connection/subscription limits and data entitlements apply. Disconnect when finished. There is no unattended reconnect: a new connection needs a current token or new socket URL. All quotes clear on disconnect, error, and page exit. An initial feed is labeled separately from live update packets. “Fresh trade” requires an exchange last-trade timestamp within 30 seconds; an open socket or newly received packet alone is insufficient. Closed sessions/illiquid instruments can have old trade times.
+
+The dependency-free decoder handles only LTPC fields in [Upstox's official V3 schema](https://github.com/upstox/upstox-python/blob/master/upstox_client/feeder/proto/MarketDataFeedV3.proto). It bounds-checks binary input and rejects malformed/unsafe fields. Decoder and connection flow are tested with fixtures; a successful authenticated browser feed still depends on the viewer's current credential, network, and broker policy. There are no order requests.
+
 ## Strategy-based CE / PE recommendations
 
 The second tab evaluates the complete requested catalog, with the exact rule and measurements shown per indicator. It uses **completed five-minute candles**, not live ticks. GitHub Pages cannot run a continuous stream-processing backend. Scheduled Actions refresh the analysis and the browser reads the latest published snapshot. The UI does not label these snapshots as tick-live.
@@ -119,6 +134,8 @@ python -m venv .venv
 python -m unittest discover -s tests -v
 node --check app.js
 node tests/dashboard.test.cjs
+node tests/live-feed.test.mjs
+node tests/live-viewer.test.mjs
 ```
 
 The indicator tests run with the Python standard library. The candle pipeline and API adapter tests additionally need the installed requirements. API adapter tests use fixtures and mock HTTP responses; they do not prove that a live account is authorized. The dashboard smoke test uses Node's built-in VM and a minimal DOM harness; it is not a browser rendering test.

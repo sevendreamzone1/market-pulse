@@ -1,0 +1,35 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {decodeFeed,quoteStatus,validatedSocketURL} from '../live-feed.mjs';
+const join=(...buffers)=>Buffer.concat(buffers);
+function varint(value){let n=BigInt(value),out=[];do{let byte=Number(n&127n);n>>=7n;out.push(n?byte|128:byte);}while(n);return Buffer.from(out);}
+const uint=(tag,value)=>join(varint(tag*8),varint(value));
+const bytes=(tag,value)=>join(varint(tag*8+2),varint(value.length),value);
+function double(tag,value){const body=Buffer.alloc(8);body.writeDoubleLE(value);return join(varint(tag*8+1),body);}
+const now=1794900000000;
+const ltpc=join(double(1,25321.25),uint(2,now),uint(3,50),double(4,25000));
+const feed=bytes(1,ltpc);
+const entry=join(bytes(1,Buffer.from('NSE_INDEX|Nifty 50')),bytes(2,feed));
+const packet=join(uint(1,1),bytes(2,entry),uint(3,now));
+const decoded=decodeFeed(packet);
+assert.equal(decoded.type,1);assert.equal(decoded.currentTs,now);
+assert.deepEqual(decoded.quotes,[{key:'NSE_INDEX|Nifty 50',ltp:25321.25,ltt:now,ltq:50,cp:25000}]);
+assert.equal(quoteStatus(decoded.quotes[0],now+1000),'Fresh trade');
+assert.equal(quoteStatus(decoded.quotes[0],now+31000),'Stale trade');
+assert.equal(quoteStatus({...decoded.quotes[0],ltt:now+100000},now),'Invalid future trade time');
+assert.equal(quoteStatus({...decoded.quotes[0],ltt:null},now),'Trade time unavailable');
+assert.equal(quoteStatus(null,now),'Waiting');
+const marketInfo=join(uint(1,2),uint(3,now),bytes(4,Buffer.alloc(0)));
+assert.equal(decodeFeed(marketInfo).quotes.length,0);
+const badPrice=bytes(2,join(bytes(1,Buffer.from('TEST')),bytes(2,bytes(1,double(1,NaN)))));
+assert.equal(decodeFeed(badPrice).quotes.length,0);
+for(const bad of [Buffer.from([0]),Buffer.from([18,99,0]),Buffer.from([9,0]),Buffer.from([128])])assert.throws(()=>decodeFeed(bad));
+assert.equal(validatedSocketURL('wss://wsfeed.upstox.com/feed?code=fixture'),'wss://wsfeed.upstox.com/feed?code=fixture');
+for(const bad of ['ws://wsfeed.upstox.com/feed','wss://upstox.com.evil.test/feed','wss://evil.test/feed','wss://user:password@wsfeed.upstox.com/feed','wss://wsfeed.upstox.com/feed#x'])assert.throws(()=>validatedSocketURL(bad));
+const html=readFileSync(new URL('../live.html',import.meta.url),'utf8');
+const source=readFileSync(new URL('../live.js',import.meta.url),'utf8');
+assert.match(html,/script-src 'self'/);assert.match(html,/name="referrer" content="no-referrer"/);
+assert.doesNotMatch(source,/localStorage|sessionStorage|document\.cookie|console\./);
+const ids=new Set([...html.matchAll(/id="([^"]+)"/g)].map(m=>m[1]));
+for(const match of source.matchAll(/\$\('([^']+)'\)/g))assert.ok(ids.has(match[1]),'Missing live element '+match[1]);
+console.log('Live feed checks passed: official LTPC field mapping, timestamps, malformed packets, credential URL restrictions, and private-page configuration.');
