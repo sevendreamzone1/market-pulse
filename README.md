@@ -8,17 +8,32 @@ Upstox is the preferred market-data API. The repository is configured with `MARK
 
 Includes TradingView charts, an eight-company watchlist, NIFTY 50 / BANK NIFTY / SENSEX snapshots, exchange and signal filters, and EMA 9 / EMA 21 / Wilder RSI 14 observations. Demo mode is explicitly fictional and opt-in. No fake prices are shown as market data.
 
-## CE / PE analysis (second tab)
+## Strategy-based CE / PE recommendations
 
-The **CE / PE analysis** tab covers NIFTY 50, BANK NIFTY, and SENSEX. A bullish EMA/RSI observation creates a conditional **CE watch**; bearish creates a **PE watch**; neutral means **no trade**. These are unvalidated research rules, not predictions or automated buy instructions.
+The second tab evaluates the complete requested catalog, with the exact rule and measurements shown per indicator. It uses **completed five-minute candles**, not live ticks. GitHub Pages cannot run a continuous stream-processing backend. Scheduled Actions refresh the analysis and the browser reads the latest published snapshot. The UI does not label these snapshots as tick-live.
 
-- **Underlying trigger:** a NEW completed five-minute candle beyond the extreme of the latest 20 completed closes (above for CE, below for PE). Invalidation is the opposite extreme of the latest five closes. Index targets are one and two times that index risk distance. All these levels are **index points**, not option premiums. Recheck alignment at entry and skip an invalidated or already-run move.
-- **Premium scenario:** when Upstox is active, fetch option contracts and the nearest future expiry's chain. Resolve the nearest-to-spot strike and selected CE/PE contract, including its actual lot and tick sizes. Exclude same-day expiry, nonpositive/missing prices or volume, crossed quotes, spread above 5%, and bid/ask quantities below one lot. The ask is a planning reference; preset stop is -20% and targets +20% / +40%, rounded to ticks. Recalculate using the actual fill. Fees, slippage, IV and theta are not modeled. Planned stop risk is not maximum risk; the whole premium can be lost.
-- **Exit criteria:** stop, index invalidation, or lost EMA/RSI alignment, whichever occurs first; partial T1 and remainder T2 are illustrative. Time exit is 30 minutes from entry or 15:15 IST, whichever comes first. No new-entry scenarios before 09:30 or from 14:45 IST.
-- **Freshness:** withhold entry/target levels outside the weekday research window or when the underlying is older than ten minutes. Premium values are hidden when retrieval is older than five minutes. Upstox option-chain responses do not give an exchange quote timestamp; retrieval freshness does NOT prove quote freshness. The UI explicitly requires broker confirmation. No option quotes means no premium levels. Demo shows fictional underlying scenarios only.
-- **Execution:** this dashboard does not track fills, monitor live stops, or place orders. Five-minute scheduled snapshots cannot enforce exit criteria. Use broker-side live monitoring and orders. The strategy has not been backtested.
+| Category | Implemented rules |
+| --- | --- |
+| Market structure | HH/HL, LH/LL from two confirmed pivots; BOS; CHoCH |
+| Price action | Breakout + Retest; Support/Resistance; Trendline Breakout |
+| Candlestick patterns | Engulfing; Pin Bar; Hammer; body-based Morning/Evening Star |
+| Trend indicators | Full EMA 9/21/50/200 stack; Supertrend 10/3; Wilder ADX14 with DI |
+| Momentum | Wilder RSI14; EMA MACD12/26/9; Stochastic14/3 crosses |
+| Volume | Volume Breakout; Volume Spike; OBV versus its 20-bar mean |
+| Intraday | Session VWAP; completed 09:15–09:30 ORB; Previous Day High/Low |
+| Volatility | Bollinger20/2 re-entry; Wilder ATR14; squeeze breakout |
+| Liquidity concepts | Swing liquidity-sweep rejection; three-bar FVG; displacement-based order-block heuristic |
+| Options context | OI, PCR, IV, Delta, Theta, Gamma, and bid/ask liquidity from Upstox |
 
-The snapshot's `options` array contains these scenarios separately from watchlist data. Option-chain failures are isolated so they do not prevent publishing valid underlying snapshots. Existing candle-source and stale-data checks still apply.
+The model is versioned `catalog-v1`. Names with multiple interpretations use explicit heuristics, not discretionary institutional order-flow inference. Pivots require two preceding and two later bars; unconfirmed pivots are never used. Volume-dependent rules are unavailable for zero-volume indices. Missing OHLC, EMA200 warm-up, incomplete opening range, missing Greeks, and other unavailable inputs are displayed, never fabricated.
+
+**Confluence:** equal weight per category, not per indicator. A category votes bullish/bearish if its mean rule vote is >=0.25 / <=-0.25. At least five categories must be available, at least four must support one side, at least 60% must agree, and the lead over the opposite side must be at least three categories. Otherwise NO TRADE. Options context does not vote direction. Agreement is **not** a win probability; correlated categories remain correlated, and the model has not been backtested.
+
+**Entry and risk:** directional confluence creates a conditional CE/PE setup. Entry requires a new completed close beyond the latest 20-bar high/low. The index stop uses the tighter five-close extreme / 1.5 ATR14; index targets are 1R and 2R. Quoted premium entry uses the actual ask, while stop and targets use at least 30 completed option candles, ATR14 and the last five lows (long options only). The stop is the tighter swing low / 1.5 ATR and premium targets are 1R / 2R. No option history means no premium targets. Recalculate from actual fills. Costs, IV changes, and slippage are not predicted; the whole premium may be lost.
+
+**Options contract:** nearest future expiry (exclude expiry day), nearest-to-spot strike. Require valid bid/ask, spread <=5%, nonzero volume, and depth >=one lot. The master supplies lot/tick sizes. The chain has no exchange quote timestamp; retrieval freshness alone cannot prove exchange freshness. Verify broker quotes.
+
+**Exit and suppression:** stop, index invalidation, or confluence loss; partial T1 / remainder T2 are illustrative. Time exit: 30 minutes after entry or 15:15 IST. New-entry window 09:30–14:45 IST, weekdays only (no holiday calendar). Hide levels when the underlying is >ten minutes old; hide premium levels when retrieval is >five minutes old. Five-minute snapshots cannot monitor or execute live stops. No orders or fills are managed.
 
 ## Data and timing
 

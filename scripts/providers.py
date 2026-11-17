@@ -70,8 +70,11 @@ def candle_frame(payload):
     index = pd.to_datetime([row[0] for row in candles], utc=True, errors='raise')
     if any(pd.Timestamp(row[0]).tzinfo is None for row in candles):
         raise ValueError('Market API candle is missing its timezone')
-    prices = pd.to_numeric([row[4] for row in candles], errors='raise')
-    return pd.DataFrame({'Close': prices}, index=index).sort_index()
+    values = {name: pd.to_numeric([row[position] for row in candles], errors='raise')
+              for position, name in enumerate(('Open', 'High', 'Low', 'Close'), start=1)}
+    if all(len(row) > 5 for row in candles):
+        values['Volume'] = pd.to_numeric([row[5] for row in candles], errors='raise')
+    return pd.DataFrame(values, index=index).sort_index()
 
 
 class YahooProvider:
@@ -131,6 +134,19 @@ class UpstoxProvider:
             raise ValueError('No future-expiry options contracts returned.')
         chain = self._request(root + 'chain?' + urlencode({'instrument_key':key, 'expiry_date':expiries[0]}), self._token).get('data', [])
         return chain, contracts
+
+    def option_candles(self, instrument_key, now):
+        import pandas as pd
+        key=quote(instrument_key,safe='')
+        today=now.astimezone(ZoneInfo('Asia/Kolkata')).date()
+        history=candle_frame(self._request(f'{API_ROOT}/historical-candle/{key}/minutes/5/{today-timedelta(days=1)}/{today-timedelta(days=10)}',self._token))
+        intraday=candle_frame(self._request(f'{API_ROOT}/historical-candle/intraday/{key}/minutes/5',self._token))
+        frame=pd.concat([history,intraday]).sort_index()
+        frame=frame[~frame.index.duplicated(keep='last')]
+        frame=frame[frame.index+timedelta(minutes=5)<=now]
+        if frame.empty or (now-frame.index[-1].to_pydatetime()-timedelta(minutes=5)).total_seconds()>600:
+            raise ValueError('Option candle history is stale or unavailable.')
+        return [{'high':float(row.High),'low':float(row.Low),'close':float(row.Close)} for row in frame.itertuples()]
 
 
 def select_provider(mode=None, token=None):

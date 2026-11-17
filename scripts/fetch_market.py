@@ -8,6 +8,7 @@ from zoneinfo import ZoneInfo
 from signals import analyze
 from providers import select_provider, provider_configuration
 from options_analysis import build_options
+from strategies import evaluate
 
 ROOT = Path(__file__).resolve().parents[1]
 TICKERS = ['RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS',
@@ -36,7 +37,8 @@ def build_item(ticker, candles, daily, now):
     prev_close = float(previous['Close'].iloc[-1]) if len(previous) else None
     change = (closes[-1] / prev_close - 1) * 100 if prev_close and math.isfinite(prev_close) else None
     return dict(ticker=ticker, price=closes[-1], change_pct=change,
-                candle_end=last_end.isoformat(), recent_closes=closes[-30:], **indicators)
+                candle_end=last_end.isoformat(), recent_closes=closes[-30:],
+                strategy_report=evaluate(candles), **indicators)
 
 
 def main():

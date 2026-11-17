@@ -82,6 +82,13 @@ class RequestTests(unittest.TestCase):
 
 @unittest.skipUnless(importlib.util.find_spec('pandas'), 'Install requirements for API candle tests')
 class UpstoxCandleTests(unittest.TestCase):
+    def test_preserves_ohlcv_without_inventing_missing_volume(self):
+        payload={'data':{'candles':[['2026-11-17T09:15:00+05:30',100,103,99,102,1200,0]]}}
+        frame=candle_frame(payload)
+        self.assertEqual(frame.iloc[0].to_dict(),{'Open':100,'High':103,'Low':99,'Close':102,'Volume':1200})
+        payload['data']['candles'][0]=payload['data']['candles'][0][:5]
+        self.assertNotIn('Volume',candle_frame(payload).columns)
+
     def test_api_paths_candle_merging_and_previous_ist_session(self):
         import pandas as pd
         records = [dict(segment='NSE_INDEX', trading_symbol='Nifty 50', instrument_key='NSE_INDEX|Nifty 50')]

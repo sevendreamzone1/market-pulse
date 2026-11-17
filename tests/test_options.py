@@ -12,6 +12,7 @@ NOW = datetime(2026, 11, 17, 5, 0, tzinfo=timezone.utc)
 class OptionsTests(unittest.TestCase):
     def item(self, signal='Bullish'):
         return dict(ticker='^NSEI', recent_closes=list(range(100, 130)), signal=signal,
+                    strategy_report={'consensus':{'signal':signal,'reason':'Fixture category agreement'}},
                     candle_end='2026-11-17T04:55:00+00:00', reason='Fixture alignment')
 
     def quote(self):
@@ -37,9 +38,10 @@ class OptionsTests(unittest.TestCase):
 
     def test_premium_levels_use_actual_ask_and_master_lot_size(self):
         rows,contracts = self.quote()
-        plan = premium_scenario(rows, contracts, {'side':'CE'}, NOW)
-        self.assertEqual((plan['entry'],plan['stop'],plan['target1'],plan['target2']),(100,80,120,140))
-        self.assertEqual((plan['premium_outlay'],plan['planned_risk']),(5000,1000))
+        bars=[{'high':102,'low':98,'close':100}]*30
+        plan = premium_scenario(rows, contracts, {'side':'CE'}, NOW, risk_bars=bars)
+        self.assertEqual((plan['entry'],plan['stop'],plan['target1'],plan['target2']),(100,98,102,104))
+        self.assertEqual((plan['premium_outlay'],plan['planned_risk']),(5000,100))
         self.assertIsNone(plan['exchange_timestamp'])
 
     def test_rejects_expiry_day_missing_quote_and_illiquid_contract(self):
