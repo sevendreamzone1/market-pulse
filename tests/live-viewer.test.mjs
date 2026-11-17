@@ -42,6 +42,14 @@ assert.equal(authorized.closed,true);assert.match($('connection-status').textCon
 $('credential-mode').value='socket';$('credential').value='wss://evil.example/feed';await submit();
 assert.equal(sockets.length,2);assert.match($('connection-status').textContent,/official Upstox/);
 assert.equal($('credential').value,'');
+const priorFetch=globalThis.fetch;
+globalThis.fetch=async()=>{throw new TypeError('Network request failed');};
+$('credential-mode').value='token';$('credential').value='fixture-token-not-real';await submit();
+assert.equal($('socket-help').open,true);
+assert.match($('connection-status').textContent,/PowerShell instructions/);
+assert.equal($('credential').value,'');assert.equal($('connect').disabled,false);
+assert.equal(sockets.length,2);
+globalThis.fetch=priorFetch;
 pageEvents.pagehide();assert.match($('connection-status').textContent,/session cleared/);
 globalThis.setInterval=realInterval;
 console.log('Live viewer checks passed: binary subscription, metadata loading, direct authorization, credential clearing, disconnect, malformed-feed handling, and host validation.');

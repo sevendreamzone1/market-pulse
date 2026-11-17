@@ -17,6 +17,14 @@ Choose one connection method:
 1. **Access token:** enter your own current Upstox access token (not the client ID/API key). The page sends it directly to `https://api.upstox.com/v3/feed/market-data-feed/authorize`. Success returns a one-use socket URL. Browser authorization depends on Upstox's CORS policy.
 2. **One-time WebSocket URL:** if browser authorization is blocked, obtain `authorized_redirect_uri` from the [official authorize endpoint](https://upstox.com/developer/api-documentation/get-market-data-feed-authorize-v3/) in your own API client and enter it in the second mode. It is a private, one-use credential, not a public shareable link. Only secure WebSocket hosts below `.upstox.com` are accepted.
 
+If browser authorization reports a network/timeout/CORS error, run this from your local checkout in PowerShell:
+
+```powershell
+powershell -NoProfile -File .\scripts\connect_upstox.ps1
+```
+
+Enter the access token at the hidden prompt. The helper contacts the official authorize endpoint outside browser CORS and copies only the validated one-time URL to the clipboard. On the live page, choose **One-time authorized WebSocket URL**, paste, and connect immediately. Clear the clipboard afterwards with `Set-Clipboard -Value ""`. Each reconnect needs a new URL. Run locally without transcription or terminal recording; never in Actions. Network, account, and WebSocket restrictions can still prevent a connection. The helper never prints the token or URL and sanitizes failures.
+
 The token is used for that connection attempt and cleared from the form; it is never persisted in browser storage, cookies, source, or GitHub. It is sent only to Upstox. This page has no third-party scripts or fonts and uses a restrictive CSP. Existing GitHub Actions secrets cannot be read back by this public frontend. Every viewer must authorize their own session; this does not expose a shared account feed publicly.
 
 The broker's connection/subscription limits and data entitlements apply. Disconnect when finished. There is no unattended reconnect: a new connection needs a current token or new socket URL. All quotes clear on disconnect, error, and page exit. An initial feed is labeled separately from live update packets. “Fresh trade” requires an exchange last-trade timestamp within 30 seconds; an open socket or newly received packet alone is insufficient. Closed sessions/illiquid instruments can have old trade times.
