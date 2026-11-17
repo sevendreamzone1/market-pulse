@@ -47,7 +47,10 @@ def resolve_instrument(ticker, instruments):
         segment = {'NS': 'NSE_EQ', 'BO': 'BSE_EQ'}[suffix]
     matches = [item['instrument_key'] for item in instruments
                if item.get('segment') == segment
-               and str(item.get('trading_symbol', '')).casefold() == symbol.casefold()
+               and (str(item.get('trading_symbol', '')).casefold() == symbol.casefold()
+                    or (ticker in INDEX_NAMES and (
+                        str(item.get('name', '')).casefold() == symbol.casefold()
+                        or str(item.get('instrument_key', '')).casefold() == f'{segment}|{symbol}'.casefold())))
                and item.get('instrument_key')]
     if len(set(matches)) != 1:
         raise ValueError(f'Expected one instrument for {ticker}; found {len(set(matches))}')

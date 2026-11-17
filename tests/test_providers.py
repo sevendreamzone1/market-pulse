@@ -35,9 +35,11 @@ class ProviderSelectionTests(unittest.TestCase):
     def test_instrument_resolution_matches_exchange_and_rejects_ambiguity(self):
         records = [dict(segment='NSE_EQ', trading_symbol='RELIANCE', instrument_key='NSE_EQ|TEST'),
                    dict(segment='BSE_EQ', trading_symbol='RELIANCE', instrument_key='BSE_EQ|TEST'),
-                   dict(segment='NSE_INDEX', trading_symbol='Nifty 50', instrument_key='NSE_INDEX|Nifty 50')]
+                   dict(segment='NSE_INDEX', trading_symbol='NIFTY', name='Nifty 50', instrument_key='NSE_INDEX|Nifty 50'),
+                   dict(segment='NSE_INDEX', trading_symbol='BANKNIFTY', name='Nifty Bank', instrument_key='NSE_INDEX|Nifty Bank')]
         self.assertEqual(resolve_instrument('RELIANCE.NS', records), 'NSE_EQ|TEST')
         self.assertEqual(resolve_instrument('^NSEI', records), 'NSE_INDEX|Nifty 50')
+        self.assertEqual(resolve_instrument('^NSEBANK', records), 'NSE_INDEX|Nifty Bank')
         with self.assertRaisesRegex(ValueError, 'Expected one instrument'):
             resolve_instrument('ITC.BO', records)
 
