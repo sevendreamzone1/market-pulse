@@ -41,6 +41,9 @@ jobs:
           key: market-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: market-
       - name: Fetch completed candles and calculate signals
+        env:
+          MARKET_PROVIDER: ${{ vars.MARKET_PROVIDER || 'auto' }}
+          UPSTOX_ACCESS_TOKEN: ${{ secrets.UPSTOX_ACCESS_TOKEN }}
         run: python scripts/fetch_market.py
       - uses: actions/cache/save@v4
         with:

@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 from signals import analyze
+from providers import select_provider
 
 ROOT = Path(__file__).resolve().parents[1]
 TICKERS = ['RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS',
@@ -38,29 +39,33 @@ def build_item(ticker, candles, daily, now):
 
 
 def main():
-    import yfinance as yf
+    provider = select_provider()
+    print('Data source: ' + provider.name)
     now = datetime.now(timezone.utc)
     items, errors = [], []
     for ticker in TICKERS:
         try:
-            candles = yf.download(ticker, period='5d', interval='5m', auto_adjust=True,
-                                  progress=False, multi_level_index=False, threads=False, timeout=20)
-            daily = yf.download(ticker, period='1mo', interval='1d', auto_adjust=True,
-                                progress=False, multi_level_index=False, threads=False, timeout=20)
-            items.append(build_item(ticker, candles, daily, now))
+            candles, daily = provider.frames(ticker, now)
+            item = build_item(ticker, candles, daily, now)
+            item.update(source=provider.name, adjustment=provider.adjustment)
+            items.append(item)
             print(f'{ticker}: candle ended {items[-1]["candle_end"]}')
         except Exception as exc:
             errors.append(dict(ticker=ticker, error=str(exc)[:180]))
             print(f'::warning::{ticker}: {exc}', file=sys.stderr)
     path = ROOT / 'data' / 'market.json'
     if not items:
-        raise SystemExit('No symbols refreshed. Keeping the previous deployed site; inspect provider connectivity.')
+        raise SystemExit('No symbols refreshed. Keeping the previous deployed site. Check connectivity; '
+                         'for the authenticated API configure UPSTOX_ACCESS_TOKEN and MARKET_PROVIDER=upstox.')
     # Retain previous values for failed symbols with their ORIGINAL timestamps.
     if path.exists():
         old = json.loads(path.read_text(encoding='utf-8'))
         refreshed = {item['ticker'] for item in items}
-        items.extend(item for item in old.get('items', []) if item.get('ticker') not in refreshed)
-    result = dict(generated_at=now.isoformat(), source='Yahoo Finance via yfinance (indicative, may be delayed)',
+        for item in old.get('items', []):
+            if item.get('ticker') not in refreshed:
+                item.setdefault('source', old.get('source', 'Unknown retained feed'))
+                items.append(item)
+    result = dict(generated_at=datetime.now(timezone.utc).isoformat(), source=provider.name,
                   interval='5m', items=items, errors=errors)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix('.tmp')
