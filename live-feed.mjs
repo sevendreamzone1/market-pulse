@@ -1,6 +1,6 @@
 // Minimal LTPC decoder for Upstox's official V3 Protobuf schema:
 // https://github.com/upstox/upstox-python/blob/master/upstox_client/feeder/proto/MarketDataFeedV3.proto
-// Only LTPC mode is requested. Unknown fields are skipped with bounds checks.
+// LTPC and full feeds. Unknown fields are skipped with bounds checks.
 function fields(bytes){
   const result=[];let pos=0;
   const varint=()=>{let value=0n,shift=0n;for(let i=0;i<10;i++){if(pos>=bytes.length)throw Error('Truncated varint');const b=bytes[pos++];value|=BigInt(b&127)<<shift;if(!(b&128)){if(value>BigInt(Number.MAX_SAFE_INTEGER))throw Error('Unsafe integer');return Number(value);}shift+=7n;}throw Error('Invalid varint');};
@@ -23,7 +23,10 @@ export function decodeFeed(buffer){
     let key,feed;
     for(const entry of fields(field.value)){if(entry.number===1&&entry.wire===2)key=new TextDecoder('utf-8',{fatal:true}).decode(entry.value);if(entry.number===2&&entry.wire===2)feed=entry.value;}
     if(!key||!feed)continue;
-    const ltpc=fields(feed).find(f=>f.number===1&&f.wire===2);
+    const feedFields=fields(feed);let container=feedFields,market=false;
+    const full=feedFields.find(f=>f.number===2&&f.wire===2);
+    if(full){const union=fields(full.value).find(f=>[1,2].includes(f.number)&&f.wire===2);if(!union)continue;container=fields(union.value);market=union.number===1;}
+    const ltpc=container.find(f=>f.number===1&&f.wire===2);
     if(!ltpc)continue;
     const quote={key,ltp:null,ltt:null,ltq:0,cp:null};
     for(const item of fields(ltpc.value)){
@@ -31,6 +34,15 @@ export function decodeFeed(buffer){
       if(item.number===2&&item.wire===0)quote.ltt=item.value;
       if(item.number===3&&item.wire===0)quote.ltq=item.value;
       if(item.number===4&&item.wire===1)quote.cp=item.value;
+    }
+    if(market){
+      const level=container.find(f=>f.number===2&&f.wire===2);
+      const first=level&&fields(level.value).find(f=>f.number===1&&f.wire===2);
+      if(first){
+        const depth=fields(first.value),get=(n,w)=>depth.find(f=>f.number===n&&f.wire===w)?.value;
+        quote.bidQty=get(1,0)??0;quote.bid=get(2,1)??0;quote.askQty=get(3,0)??0;quote.ask=get(4,1)??0;
+      }
+      quote.volume=container.find(f=>f.number===6&&f.wire===0)?.value??0;
     }
     if(Number.isFinite(quote.ltp)&&quote.ltp>0)quotes.push(quote);
   }return {quotes,currentTs,type};

@@ -37,6 +37,8 @@ jobs:
       - run: node --check live.js
       - run: node tests/live-feed.test.mjs
       - run: node tests/live-viewer.test.mjs
+      - run: node tests/live-setups.test.mjs
+      - run: node tests/live-dashboard.test.mjs
       - run: node tests/dashboard.test.cjs
       - uses: actions/cache/restore@v4
         with:
@@ -55,7 +57,7 @@ jobs:
       - name: Prepare static website
         run: |
           mkdir -p dist/data
-          cp index.html styles.css app.js live.html live.css live.js live-feed.mjs favicon.svg .nojekyll dist/
+          cp index.html styles.css app.js live.html live.css live.js live-feed.mjs live-setups.mjs live-panel.mjs live-dashboard.mjs live-setups.css favicon.svg .nojekyll dist/
           cp data/market.json dist/data/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

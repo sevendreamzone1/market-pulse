@@ -15,7 +15,17 @@ const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp
 const dateTime = value => value && Number.isFinite(Date.parse(value)) ? new Intl.DateTimeFormat('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(value))+' IST' : 'Unavailable';
 let snapshot = {items:[]}, selected = universe[0], exchange = 'ALL', demo = false, previousSnapshot = null, refreshing = false, widgetTimer;
 const fresh = item => { const age=Date.now()-Date.parse(item?.candle_end); return Number.isFinite(age) && age>=0 && age<=20*60*1000; };
-const find = ticker => snapshot.items.find(item=>item.ticker===ticker);
+let liveQuotes=new Map();
+const rawFind=ticker=>snapshot.items.find(item=>item.ticker===ticker);
+function find(ticker){
+  const item=rawFind(ticker);if(demo)return item;
+  const canonical={'^NSEI':'NSE_INDEX|Nifty 50','^NSEBANK':'NSE_INDEX|Nifty Bank','^BSESN':'BSE_INDEX|SENSEX'};
+  const quote=liveQuotes.get(item?.instrument_key||canonical[ticker]);
+  const age=Date.now()-quote?.ltt,received=Date.now()-quote?.receivedAt;
+  if(!quote||!Number.isFinite(quote.ltp)||quote.ltp<=0||!Number.isFinite(age)||age<0||age>30000||!Number.isFinite(received)||received<0||received>5000)return item;
+  return {...item,price:quote.ltp,change_pct:quote.cp>0?(quote.ltp/quote.cp-1)*100:null,live:true,trade_time:new Date(quote.ltt).toISOString()};
+}
+globalThis.addEventListener?.('marketpulse-quotes',event=>{liveQuotes=new Map((event.detail||[]).filter(q=>q&&typeof q.key==='string').map(q=>[q.key,q]));render(true);});
 function change(item){if(!Number.isFinite(item?.change_pct))return '<span>Change unavailable</span>';const positive=item.change_pct>=0;return `<span class="${positive?'positive':'negative'}">${positive?'↗ +':'↘ '}${item.change_pct.toFixed(2)}% <span class="muted">vs prev. close</span></span>`;}
 function tick(){
   $('clock').textContent = new Intl.DateTimeFormat('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date())+' IST';
@@ -24,12 +34,13 @@ function tick(){
   $('session').textContent = open?'● Regular session*':'○ Outside regular hours*';
   $('session').title = 'Weekdays 09:15–15:30 IST. Exchange holidays and special sessions are not checked.';
 }
-function render(){
-  renderOptions();
-  $('indices').innerHTML=indices.map(index=>{const item=find(index.ticker);const closes=item?.recent_closes?.filter(Number.isFinite)||[];let spark='';if(closes.length>1){const min=Math.min(...closes),range=Math.max(...closes)-min||1;const points=closes.map((v,i)=>`${i/(closes.length-1)*85},${32-(v-min)/range*28}`).join(' ');spark=`<svg viewBox="0 0 85 35" aria-hidden="true"><polyline points="${points}" fill="none" stroke="${item.change_pct>=0?'#91d8ae':'#f19c92'}" stroke-width="1.5"/></svg>`;}return `<div class="index-card"><div class="index-top"><span>${index.name}</span><span>${index.exchange}</span></div><div class="index-price">${money(item?.price)}</div><div class="index-change">${change(item)}</div>${spark}<div class="signal-time">${demo?'DEMO · ':''}${item?dateTime(item.candle_end):'Awaiting first snapshot'}${item&&!fresh(item)?' · stale':''}</div></div>`;}).join('');
+function render(pricesOnly=false){
+  $('live-setups').hidden=demo;
+  if(pricesOnly!==true)renderOptions();
+  $('indices').innerHTML=indices.map(index=>{const item=find(index.ticker);const closes=item?.recent_closes?.filter(Number.isFinite)||[];let spark='';if(closes.length>1){const min=Math.min(...closes),range=Math.max(...closes)-min||1;const points=closes.map((v,i)=>`${i/(closes.length-1)*85},${32-(v-min)/range*28}`).join(' ');spark=`<svg viewBox="0 0 85 35" aria-hidden="true"><polyline points="${points}" fill="none" stroke="${item.change_pct>=0?'#91d8ae':'#f19c92'}" stroke-width="1.5"/></svg>`;}return `<div class="index-card"><div class="index-top"><span>${index.name}</span><span>${index.exchange}</span></div><div class="index-price">${money(item?.price)}</div><div class="index-change">${change(item)}</div>${spark}<div class="signal-time">${item?.live?'LIVE · '+dateTime(item.trade_time):item?(demo?'DEMO · ':'')+dateTime(item.candle_end):'Awaiting first snapshot'}${item&&!fresh(item)?' · strategy snapshot stale':''}</div></div>`;}).join('');
   const stocks=universe.filter(stock=>(exchange==='ALL'||stock.exchange===exchange)&&`${stock.name} ${stock.symbol}`.toLowerCase().includes($('search').value.toLowerCase().trim()));
   $('watch-count').textContent=stocks.length;
-  $('watchlist').innerHTML=stocks.length?stocks.map(stock=>{const item=find(stock.ticker);return `<button class="stock-row ${selected.symbol===stock.symbol?'current':''}" data-symbol="${stock.symbol}" aria-label="View ${stock.name} chart"><span><span class="stock-name">${stock.symbol.split(':')[1]}</span><span class="stock-sub">${stock.name} · ${stock.exchange}</span></span><span class="stock-price">${money(item?.price)}<small>${change(item)}</small><small class="muted">${item?(demo?'DEMO':fresh(item)?'Snapshot':'Stale snapshot'):'Awaiting data'}</small></span></button>`;}).join(''):'<div class="empty">No matching companies.</div>';
+  $('watchlist').innerHTML=stocks.length?stocks.map(stock=>{const item=find(stock.ticker);return `<button class="stock-row ${selected.symbol===stock.symbol?'current':''}" data-symbol="${stock.symbol}" aria-label="View ${stock.name} chart"><span><span class="stock-name">${stock.symbol.split(':')[1]}</span><span class="stock-sub">${stock.name} · ${stock.exchange}</span></span><span class="stock-price">${money(item?.price)}<small>${change(item)}</small><small class="muted">${item?(demo?'DEMO':item.live?'Live API quote':fresh(item)?'Snapshot':'Stale snapshot'):'Awaiting data'}</small></span></button>`;}).join(''):'<div class="empty">No matching companies.</div>';
   const filter=$('signal-filter').value;
   const cards=universe.map(stock=>({stock,item:find(stock.ticker)})).filter(({item})=>filter==='all'||((demo||fresh(item))&&item?.signal===filter));
   $('signal-grid').innerHTML=cards.length?cards.map(({stock,item})=>{

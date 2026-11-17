@@ -26,7 +26,7 @@ $('credential-mode').value='socket';$('credential').value='wss://wsfeed.upstox.c
 await submit();assert.equal(sockets.length,1);assert.equal($('credential').value,'');
 const current=sockets[0];current.readyState=1;current.onopen();
 const subscription=JSON.parse(new TextDecoder().decode(current.sent));
-assert.equal(subscription.method,'sub');assert.equal(subscription.data.mode,'ltpc');
+assert.equal(subscription.method,'sub');assert.equal(subscription.data.mode,'full');
 assert.ok(subscription.data.instrumentKeys.includes('NSE_EQ|FIXTURE'));
 assert.ok(current.sent instanceof Uint8Array);
 assert.match($('connection-status').textContent,/waiting for broker quotes/);

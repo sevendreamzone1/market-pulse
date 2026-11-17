@@ -10,7 +10,7 @@ Includes TradingView charts, an eight-company watchlist, NIFTY 50 / BANK NIFTY /
 
 ## Personal live API quotes
 
-Open [Live API quotes](https://sevendreamzone1.github.io/market-pulse/live.html), or select **Live API quotes** in the dashboard header. This separate page connects from the browser directly to Upstox V3 WebSocket in LTPC mode. It shows last price, change from previous close, exchange trade time, and freshness. It includes the three indices, available watchlist instrument keys, and current option-contract keys from the published snapshot. It does not recalculate strategy recommendations from ticks; those remain completed-candle snapshots.
+Open [Live API quotes](https://sevendreamzone1.github.io/market-pulse/live.html), or select **Live API quotes** in the dashboard header. This separate page connects from the browser directly to Upstox V3 WebSocket in full mode. It shows last price, change from previous close, exchange trade time, and freshness. It includes the three indices, available watchlist instrument keys, and current option-contract keys from the published snapshot. It confirms snapshot-based CE/PE scenarios with live index candles and option depth, then monitors targets and stops. Full strategy calculations remain completed-candle snapshots.
 
 Choose one connection method:
 
@@ -29,7 +29,17 @@ The token is used for that connection attempt and cleared from the form; it is n
 
 The broker's connection/subscription limits and data entitlements apply. Disconnect when finished. There is no unattended reconnect: a new connection needs a current token or new socket URL. All quotes clear on disconnect, error, and page exit. An initial feed is labeled separately from live update packets. “Fresh trade” requires an exchange last-trade timestamp within 30 seconds; an open socket or newly received packet alone is insufficient. Closed sessions/illiquid instruments can have old trade times.
 
-The dependency-free decoder handles only LTPC fields in [Upstox's official V3 schema](https://github.com/upstox/upstox-python/blob/master/upstox_client/feeder/proto/MarketDataFeedV3.proto). It bounds-checks binary input and rejects malformed/unsafe fields. Decoder and connection flow are tested with fixtures; a successful authenticated browser feed still depends on the viewer's current credential, network, and broker policy. There are no order requests.
+The dependency-free decoder handles LTPC plus full-feed index and option depth fields in [Upstox's official V3 schema](https://github.com/upstox/upstox-python/blob/master/upstox_client/feeder/proto/MarketDataFeedV3.proto). It bounds-checks binary input and rejects malformed/unsafe fields. Decoder and connection flow are tested with fixtures; a successful authenticated browser feed still depends on the viewer's current credential, network, and broker policy. There are no order requests.
+
+## Live CE / PE scenarios across the app
+
+The live page and a shared panel above both dashboard tabs show NIFTY 50, BANK NIFTY and SENSEX scenarios. Connect once on `live.html` and keep it open in the same browser and origin. An in-memory BroadcastChannel shares only quotes and scenario outputs, never the access token or socket URL. Index cards and watchlist prices use fresh broker quotes when available, explicitly labeled live; technical indicators retain their own candle timestamps. After five seconds without the live tab heartbeat, the dashboard clears live scenarios and falls back to labeled snapshot prices. No browser storage is used.
+
+A buy candidate requires all of the following: a directional full-strategy snapshot no older than ten minutes; a matching future-expiry contract with option ATR/risk metadata retrieved within five minutes; fresh live index and option trades within 30 seconds and packets within five seconds; uncrossed bid/ask spread <=5%; traded volume and depth >=one lot; and a newly completed five-minute candle beyond the underlying trigger. The live candle must be observed from its first ten seconds with no sample gap over 30 seconds. Initial snapshots, partial candles and reconnect gaps never confirm an entry. Entries are restricted to 09:30?14:45 IST weekdays; exchange holidays are not independently checked. Skip moves that have already passed either the original index or premium T1.
+
+Before confirmation, WATCH CE/PE displays changing ask references. Confirmation freezes the indicative ask entry, the tighter existing swing stop / 1.5 option ATR stop, and 1R/2R targets rounded to the contract tick size. These are observed scenarios, not actual fills. Fresh option bids monitor SL, T1 and T2; target/stop touches latch on each packet. Underlying invalidation, confluence loss, or 30 minutes from the observed trigger / 15:15 IST also exits the scenario. Stale model/quotes pause price monitoring; broker-side risk management is still required. Disconnecting or closing the live page clears session monitoring. No orders or fill tracking are implemented.
+
+This is live **confirmation and monitoring of the full strategy snapshot**, not recalculation of every indicator on every tick. Strategy/OI/Greeks context still refreshes through GitHub Actions; completed-candle data, broker entitlements and browser connectivity determine availability. No validated win rate is claimed.
 
 ## Strategy-based CE / PE recommendations
 
@@ -67,14 +77,14 @@ The model is versioned `catalog-v1`. Names with multiple interpretations use exp
 - **Session badge:** regular weekday hours only, 09:15–15:30 IST. It does not check exchange holidays or special sessions.
 - **Price changes:** compared with the daily close before the latest intraday session. The backend keeps failed symbols from the previous cached snapshot with their original times.
 
-This project uses periodically fetched candles, not a tick-by-tick streaming feed. Upstox requests run in GitHub Actions with a server-side secret; no token is sent to the browser. Data access depends on the account's permissions and provider availability. Never embed a broker access token in this public frontend. Review the provider's terms for your intended use; yfinance is intended for personal research. Public/commercial redistribution may need a licensed feed. TradingView attribution is retained.
+The scheduled strategy pipeline uses periodically fetched candles. Its Upstox requests run in GitHub Actions with a server-side secret; that secret is never sent to the browser. The separate personal live page authorizes its own session directly with Upstox. Data access depends on the account's permissions and provider availability. Never embed a broker access token in this public frontend. Review the provider's terms for your intended use; yfinance is intended for personal research. Public/commercial redistribution may need a licensed feed. TradingView attribution is retained.
 
 ## Authenticated API setup (Upstox)
 
 1. Set up an Upstox developer app and generate an access token using the [official authentication flow](https://upstox.com/developer/api-documentation/authentication/). An API key/client ID alone is not an access token. Do not paste credentials into this chat, a source file, or a frontend settings field.
 2. Open this repository's [Actions secrets settings](https://github.com/sevendreamzone1/market-pulse/settings/secrets/actions), choose **New repository secret**, name it `UPSTOX_ACCESS_TOKEN`, and put the access token in its value. The client ID or API key alone will not work. The app secret is not needed by the snapshot fetcher.
 3. Under the **Variables** tab, optionally add `MARKET_PROVIDER` with value `upstox`. The default `auto` already selects Upstox when the token exists; without it, `auto` selects Yahoo. Set `yahoo` to explicitly use Yahoo. Explicit Upstox mode fails clearly when the token is missing.
-4. Open [Refresh market data and deploy Pages](https://github.com/sevendreamzone1/market-pulse/actions/workflows/pages.yml), choose **Run workflow** on `main`, and wait for the deployment to succeed. No source change is needed after adding the secret. It resolves the watchlist against Upstox's instrument master and fetches historical, daily, and current-session candles. Prices in the dashboard represent the last completed five-minute candle, not the latest traded tick.
+4. Open [Refresh market data and deploy Pages](https://github.com/sevendreamzone1/market-pulse/actions/workflows/pages.yml), choose **Run workflow** on `main`, and wait for the deployment to succeed. No source change is needed after adding the secret. It resolves the watchlist against Upstox's instrument master and fetches historical, daily, and current-session candles. Without a connected live tab, dashboard prices represent the last completed five-minute candle. Fresh browser-streamed prices override index and watchlist prices with an explicit live label.
 5. Renew the repository secret when needed: Upstox's [standard access token expires at 3:30 AM the following day](https://upstox.com/developer/api-documentation/get-token/). This project does not bypass login or automatically renew tokens. Failed authentication preserves the prior deployment, whose signals expire by candle time.
 
 Only market-data GET endpoints are used; there is no order placement. An Upstox authorization failure is not silently replaced with Yahoo data. Each refreshed item records its source; retained failed symbols keep their original source and timestamp. Yahoo prices are adjusted; Upstox prices use provider-native candles, so corporate actions can affect indicators differently.
@@ -144,6 +154,8 @@ node --check app.js
 node tests/dashboard.test.cjs
 node tests/live-feed.test.mjs
 node tests/live-viewer.test.mjs
+node tests/live-setups.test.mjs
+node tests/live-dashboard.test.mjs
 ```
 
 The indicator tests run with the Python standard library. The candle pipeline and API adapter tests additionally need the installed requirements. API adapter tests use fixtures and mock HTTP responses; they do not prove that a live account is authorized. The dashboard smoke test uses Node's built-in VM and a minimal DOM harness; it is not a browser rendering test.

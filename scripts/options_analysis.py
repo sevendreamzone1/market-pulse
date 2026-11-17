@@ -85,7 +85,7 @@ def premium_scenario(chain, contracts, setup, now, risk_bars=None):
                 bid=bid, ask=ask, entry=entry, stop=stop, target1=t1, target2=t2,
                 premium_outlay=round(entry * lot, 2), planned_risk=round((entry-stop)*lot, 2),
                 fetched_at=datetime.now(timezone.utc).isoformat(), exchange_timestamp=None,
-                basis='option_premium_rupees',atr14=round(atr,4),
+                basis='option_premium_rupees',atr14=round(atr,4),tick_size_rupees=float(tick_rupees),
                 rule='Ask reference; stop at the tighter of the five-bar swing low and 1.5 ATR14; targets 1R and 2R, before costs.')
 
 
