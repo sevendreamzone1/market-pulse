@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))
 from providers import (API_ROOT, INSTRUMENTS_URL, UpstoxProvider, YahooProvider,
-                       candle_frame, get_json, resolve_instrument, select_provider)
+                       candle_frame, get_json, resolve_instrument, select_provider, provider_configuration)
 from fetch_market import build_item
 
 
@@ -23,6 +23,14 @@ class ProviderSelectionTests(unittest.TestCase):
             select_provider('upstox', '')
         with self.assertRaisesRegex(ValueError, 'MARKET_PROVIDER'):
             select_provider('other', '')
+
+    def test_connection_metadata_distinguishes_pending_and_configured_feed(self):
+        self.assertEqual(provider_configuration(select_provider('auto', ''), 'auto'),
+                         {'preferred':'upstox', 'active':'yahoo', 'status':'awaiting_credentials'})
+        self.assertEqual(provider_configuration(select_provider('auto', 'test-token'), 'auto'),
+                         {'preferred':'upstox', 'active':'upstox', 'status':'configured'})
+        self.assertNotIn('test-token', json.dumps(provider_configuration(select_provider('auto', 'test-token'), 'auto')))
+        self.assertEqual(provider_configuration(select_provider('yahoo', ''), 'yahoo')['status'], 'configured')
 
     def test_instrument_resolution_matches_exchange_and_rejects_ambiguity(self):
         records = [dict(segment='NSE_EQ', trading_symbol='RELIANCE', instrument_key='NSE_EQ|TEST'),

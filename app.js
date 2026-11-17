@@ -41,6 +41,7 @@ function render(){
   else {const count=universe.filter(stock=>fresh(find(stock.ticker))).length;notice.textContent=`Indicative snapshots · ${count} of ${universe.length} stocks have candles within 20 minutes. ${count?'Signals use completed 5-minute candles.':'Signals are withheld until fresh candles arrive.'} Provider data may be delayed.${snapshot.errors?.length?' Some symbols failed to refresh; check the workflow logs.':''}`;}
   if(snapshot.loadError&&!demo)notice.textContent=`Refresh failed: ${snapshot.loadError}. ${snapshot.items.length?'Showing the last loaded snapshot with freshness checks.':'Check the deployment and try again.'}`;
   if(!demo&&snapshot.items.length&&snapshot.source)notice.textContent+=' Feed: '+snapshot.source+'.';
+  if(!demo&&snapshot.feed?.preferred==='upstox'&&snapshot.feed.status==='awaiting_credentials')notice.textContent+=' Upstox connection pending; the current feed remains active until connected.';
   $('updated').textContent=demo?'DEMO · Fictional dataset':snapshot.generated_at?'Snapshot built '+dateTime(snapshot.generated_at):'No snapshot loaded';
   $('demo-toggle').textContent=demo?'Leave demo and return to market snapshots →':'Explore with clearly labeled demo data →';
 }

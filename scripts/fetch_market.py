@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 from signals import analyze
-from providers import select_provider
+from providers import select_provider, provider_configuration
 
 ROOT = Path(__file__).resolve().parents[1]
 TICKERS = ['RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS',
@@ -66,7 +66,7 @@ def main():
                 item.setdefault('source', old.get('source', 'Unknown retained feed'))
                 items.append(item)
     result = dict(generated_at=datetime.now(timezone.utc).isoformat(), source=provider.name,
-                  interval='5m', items=items, errors=errors)
+                  interval='5m', feed=provider_configuration(provider), items=items, errors=errors)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix('.tmp')
     temporary.write_text(json.dumps(result, indent=2, allow_nan=False)+'\n', encoding='utf-8')

@@ -2,6 +2,10 @@
 
 A responsive NSE/BSE dashboard built for GitHub Pages. Plain HTML, CSS, and JavaScript; no frontend build or browser API keys.
 
+[Published website](https://sevendreamzone1.github.io/market-pulse/) · [Repository](https://github.com/sevendreamzone1/market-pulse)
+
+Upstox is the preferred market-data API. The repository is configured with `MARKET_PROVIDER=auto`: it selects Upstox when `UPSTOX_ACCESS_TOKEN` exists, otherwise keeps Yahoo snapshots available. The dashboard explicitly shows when the Upstox connection is pending. A present but invalid/expired Upstox token fails the refresh rather than silently switching feeds.
+
 Includes TradingView charts, an eight-company watchlist, NIFTY 50 / BANK NIFTY / SENSEX snapshots, exchange and signal filters, and EMA 9 / EMA 21 / Wilder RSI 14 observations. Demo mode is explicitly fictional and opt-in. No fake prices are shown as market data.
 
 ## Data and timing
@@ -18,9 +22,9 @@ This project uses periodically fetched candles, not a tick-by-tick streaming fee
 ## Authenticated API setup (Upstox)
 
 1. Set up an Upstox developer app and generate an access token using the [official authentication flow](https://upstox.com/developer/api-documentation/authentication/). An API key/client ID alone is not an access token. Do not paste credentials into this chat, a source file, or a frontend settings field.
-2. In GitHub, open **Settings → Secrets and variables → Actions → Secrets → New repository secret**. Name it `UPSTOX_ACCESS_TOKEN` and put the token in its value.
+2. Open this repository's [Actions secrets settings](https://github.com/sevendreamzone1/market-pulse/settings/secrets/actions), choose **New repository secret**, name it `UPSTOX_ACCESS_TOKEN`, and put the access token in its value. The client ID or API key alone will not work. The app secret is not needed by the snapshot fetcher.
 3. Under the **Variables** tab, optionally add `MARKET_PROVIDER` with value `upstox`. The default `auto` already selects Upstox when the token exists; without it, `auto` selects Yahoo. Set `yahoo` to explicitly use Yahoo. Explicit Upstox mode fails clearly when the token is missing.
-4. Run the Pages workflow. It resolves the watchlist against Upstox's instrument master and fetches historical, daily, and current-session candles. Prices in the dashboard represent the last completed five-minute candle, not the latest traded tick.
+4. Open [Refresh market data and deploy Pages](https://github.com/sevendreamzone1/market-pulse/actions/workflows/pages.yml), choose **Run workflow** on `main`, and wait for the deployment to succeed. No source change is needed after adding the secret. It resolves the watchlist against Upstox's instrument master and fetches historical, daily, and current-session candles. Prices in the dashboard represent the last completed five-minute candle, not the latest traded tick.
 5. Renew the repository secret when needed: Upstox's [standard access token expires at 3:30 AM the following day](https://upstox.com/developer/api-documentation/get-token/). This project does not bypass login or automatically renew tokens. Failed authentication preserves the prior deployment, whose signals expire by candle time.
 
 Only market-data GET endpoints are used; there is no order placement. An Upstox authorization failure is not silently replaced with Yahoo data. Each refreshed item records its source; retained failed symbols keep their original source and timestamp. Yahoo prices are adjusted; Upstox prices use provider-native candles, so corporate actions can affect indicators differently.
@@ -31,7 +35,7 @@ Endpoints implemented:
 - [Intraday candles v3](https://upstox.com/developer/api-documentation/v3/get-intra-day-candle-data/): `/v3/historical-candle/intraday/{instrument_key}/minutes/5`
 - [Historical candles v3](https://upstox.com/developer/api-documentation/v3/get-historical-candle-data/): `/v3/historical-candle/{instrument_key}/{unit}/{interval}/{to_date}/{from_date}`
 
-The website also serves a public, credential-free snapshot API at `./data/market.json`, refreshed on deployment. It contains `generated_at`, `source`, `interval`, `items`, and `errors`; each item includes `ticker`, `price`, `change_pct`, `candle_end`, `ema9`, `ema21`, `rsi14`, `signal`, `reason`, and `source`. It is a static API snapshot, not a continuously running backend.
+The website also serves a public, credential-free snapshot API at `./data/market.json`, refreshed on deployment. It contains `generated_at`, `source`, `interval`, `feed`, `items`, and `errors`; `feed` identifies the preferred/active providers and connection status. Each item includes `ticker`, `price`, `change_pct`, `candle_end`, `ema9`, `ema21`, `rsi14`, `signal`, `reason`, and `source`. It is a static API snapshot, not a continuously running backend.
 
 ## Signal rules
 

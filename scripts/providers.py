@@ -125,3 +125,11 @@ def select_provider(mode=None, token=None):
     if mode == 'upstox' or (mode == 'auto' and token.strip()):
         return UpstoxProvider(token)
     return YahooProvider()
+
+
+def provider_configuration(provider, mode=None):
+    """Public connection metadata; never include credentials in snapshots."""
+    mode = (mode if mode is not None else os.getenv('MARKET_PROVIDER', 'auto')).strip().lower() or 'auto'
+    active = 'upstox' if isinstance(provider, UpstoxProvider) else 'yahoo'
+    return dict(preferred='upstox' if mode == 'auto' else mode, active=active,
+                status='awaiting_credentials' if mode == 'auto' and active == 'yahoo' else 'configured')
