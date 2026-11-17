@@ -41,6 +41,24 @@ class ProviderSelectionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Expected one instrument'):
             resolve_instrument('ITC.BO', records)
 
+    def test_option_chain_uses_actual_next_expiry_and_no_order_api(self):
+        calls=[]
+        def requester(url, token=None):
+            calls.append(url)
+            if url == INSTRUMENTS_URL:
+                return [dict(segment='NSE_INDEX',trading_symbol='Nifty 50',instrument_key='NSE_INDEX|Nifty 50')]
+            self.assertEqual(token,'test-token')
+            if '/contract?' in url:
+                return {'data':[{'expiry':'2026-11-17'},{'expiry':'2026-11-24'},{'expiry':'2026-12-01'}]}
+            self.assertIn('/chain?',url)
+            self.assertIn('expiry_date=2026-11-24',url)
+            return {'data':[]}
+        provider=UpstoxProvider('test-token',requester=requester)
+        chain,contracts=provider.option_chain('^NSEI',datetime(2026,11,17,5,0,tzinfo=timezone.utc))
+        self.assertEqual(len(calls),3)
+        self.assertEqual(chain,[])
+        self.assertEqual(len(contracts),3)
+
 
 @unittest.skipUnless(importlib.util.find_spec('requests'), 'Install requirements for HTTP adapter tests')
 class RequestTests(unittest.TestCase):

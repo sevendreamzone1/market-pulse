@@ -3,7 +3,7 @@ import gzip
 import json
 import os
 from datetime import timedelta
-from urllib.parse import quote
+from urllib.parse import quote, urlencode
 from zoneinfo import ZoneInfo
 
 API_ROOT = 'https://api.upstox.com/v3'
@@ -115,6 +115,19 @@ class UpstoxProvider:
         daily.index = daily.index.tz_convert('Asia/Kolkata')
         candles = pd.concat([history, intraday]).sort_index()
         return candles, daily
+
+    def option_chain(self, ticker, now):
+        if self._instruments is None:
+            self._instruments = self._request(INSTRUMENTS_URL)
+        key = resolve_instrument(ticker, self._instruments)
+        root = 'https://api.upstox.com/v2/option/'
+        contracts = self._request(root + 'contract?' + urlencode({'instrument_key':key}), self._token).get('data', [])
+        today = now.astimezone(ZoneInfo('Asia/Kolkata')).date().isoformat()
+        expiries = sorted({str(c.get('expiry', ''))[:10] for c in contracts if str(c.get('expiry', ''))[:10] > today})
+        if not expiries:
+            raise ValueError('No future-expiry options contracts returned.')
+        chain = self._request(root + 'chain?' + urlencode({'instrument_key':key, 'expiry_date':expiries[0]}), self._token).get('data', [])
+        return chain, contracts
 
 
 def select_provider(mode=None, token=None):

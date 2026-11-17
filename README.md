@@ -8,6 +8,18 @@ Upstox is the preferred market-data API. The repository is configured with `MARK
 
 Includes TradingView charts, an eight-company watchlist, NIFTY 50 / BANK NIFTY / SENSEX snapshots, exchange and signal filters, and EMA 9 / EMA 21 / Wilder RSI 14 observations. Demo mode is explicitly fictional and opt-in. No fake prices are shown as market data.
 
+## CE / PE analysis (second tab)
+
+The **CE / PE analysis** tab covers NIFTY 50, BANK NIFTY, and SENSEX. A bullish EMA/RSI observation creates a conditional **CE watch**; bearish creates a **PE watch**; neutral means **no trade**. These are unvalidated research rules, not predictions or automated buy instructions.
+
+- **Underlying trigger:** a NEW completed five-minute candle beyond the extreme of the latest 20 completed closes (above for CE, below for PE). Invalidation is the opposite extreme of the latest five closes. Index targets are one and two times that index risk distance. All these levels are **index points**, not option premiums. Recheck alignment at entry and skip an invalidated or already-run move.
+- **Premium scenario:** when Upstox is active, fetch option contracts and the nearest future expiry's chain. Resolve the nearest-to-spot strike and selected CE/PE contract, including its actual lot and tick sizes. Exclude same-day expiry, nonpositive/missing prices or volume, crossed quotes, spread above 5%, and bid/ask quantities below one lot. The ask is a planning reference; preset stop is -20% and targets +20% / +40%, rounded to ticks. Recalculate using the actual fill. Fees, slippage, IV and theta are not modeled. Planned stop risk is not maximum risk; the whole premium can be lost.
+- **Exit criteria:** stop, index invalidation, or lost EMA/RSI alignment, whichever occurs first; partial T1 and remainder T2 are illustrative. Time exit is 30 minutes from entry or 15:15 IST, whichever comes first. No new-entry scenarios before 09:30 or from 14:45 IST.
+- **Freshness:** withhold entry/target levels outside the weekday research window or when the underlying is older than ten minutes. Premium values are hidden when retrieval is older than five minutes. Upstox option-chain responses do not give an exchange quote timestamp; retrieval freshness does NOT prove quote freshness. The UI explicitly requires broker confirmation. No option quotes means no premium levels. Demo shows fictional underlying scenarios only.
+- **Execution:** this dashboard does not track fills, monitor live stops, or place orders. Five-minute scheduled snapshots cannot enforce exit criteria. Use broker-side live monitoring and orders. The strategy has not been backtested.
+
+The snapshot's `options` array contains these scenarios separately from watchlist data. Option-chain failures are isolated so they do not prevent publishing valid underlying snapshots. Existing candle-source and stale-data checks still apply.
+
 ## Data and timing
 
 - **Charts:** embedded TradingView widget. Availability and delays depend on the exchange and the widget's data rights. Chart data cannot be read by the signal engine.

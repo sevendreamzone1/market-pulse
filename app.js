@@ -25,6 +25,7 @@ function tick(){
   $('session').title = 'Weekdays 09:15–15:30 IST. Exchange holidays and special sessions are not checked.';
 }
 function render(){
+  renderOptions();
   $('indices').innerHTML=indices.map(index=>{const item=find(index.ticker);const closes=item?.recent_closes?.filter(Number.isFinite)||[];let spark='';if(closes.length>1){const min=Math.min(...closes),range=Math.max(...closes)-min||1;const points=closes.map((v,i)=>`${i/(closes.length-1)*85},${32-(v-min)/range*28}`).join(' ');spark=`<svg viewBox="0 0 85 35" aria-hidden="true"><polyline points="${points}" fill="none" stroke="${item.change_pct>=0?'#91d8ae':'#f19c92'}" stroke-width="1.5"/></svg>`;}return `<div class="index-card"><div class="index-top"><span>${index.name}</span><span>${index.exchange}</span></div><div class="index-price">${money(item?.price)}</div><div class="index-change">${change(item)}</div>${spark}<div class="signal-time">${demo?'DEMO · ':''}${item?dateTime(item.candle_end):'Awaiting first snapshot'}${item&&!fresh(item)?' · stale':''}</div></div>`;}).join('');
   const stocks=universe.filter(stock=>(exchange==='ALL'||stock.exchange===exchange)&&`${stock.name} ${stock.symbol}`.toLowerCase().includes($('search').value.toLowerCase().trim()));
   $('watch-count').textContent=stocks.length;
@@ -45,6 +46,40 @@ function render(){
   $('updated').textContent=demo?'DEMO · Fictional dataset':snapshot.generated_at?'Snapshot built '+dateTime(snapshot.generated_at):'No snapshot loaded';
   $('demo-toggle').textContent=demo?'Leave demo and return to market snapshots →':'Explore with clearly labeled demo data →';
 }
+function analysisWindow(){
+  const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Kolkata',weekday:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date()).map(p=>[p.type,p.value]));
+  const minute=Number(parts.hour)*60+Number(parts.minute);
+  return !['Sat','Sun'].includes(parts.weekday)&&minute>=570&&minute<885;
+}
+function renderOptions(){
+  const rows=demo?indices.map((index,i)=>{const item=find(index.ticker);const entry=item.price,stop=entry+(i===1?60:-60);return {ticker:index.ticker,status:i===2?'no_trade':'conditional',side:i===1?'PE':'CE',reason:i===2?'Demo: EMA and RSI do not align; wait for a directional setup.':i===1?'Demo: bearish EMA alignment with RSI 43; wait for downside confirmation.':'Demo: bullish EMA alignment with RSI 58; wait for upside confirmation.',entry,stop,target1:entry+(i===1?-60:60),target2:entry+(i===1?-120:120),candle_end:item.candle_end,premium:{status:'unavailable',reason:'Demo illustrates underlying levels only.'}};}):snapshot.options||[];
+  const open=demo||analysisWindow();
+  $('options-summary').textContent=demo?'DEMO · Fictional examples; no option-chain quotes.':open?'Research window: 09:30–14:45 IST · Confirm prices and entry in your broker.':'Outside the new-entry research window. Levels are withheld; time exit remains 15:15 IST. Exchange holidays are not checked.';
+  $('options-grid').innerHTML=indices.map(index=>{
+    const row=rows.find(r=>r.ticker===index.ticker),item=find(index.ticker);
+    const age=Date.now()-Date.parse(row?.candle_end),valid=demo||(Number.isFinite(age)&&age>=0&&age<=600000);
+    if(!row||!open||!valid||row.status!=='conditional'){
+      const message=!open?'No new entry outside 09:30–14:45 IST.':!row?'Waiting for the next analysis snapshot.':!valid?'Index data is over 10 minutes old or unavailable; no entry or target levels shown.':row.reason;
+      return `<article class="panel option-card"><div class="signal-top"><h2>${index.name}</h2><span class="pill">${demo?'DEMO · ':''}NO TRADE</span></div><p class="signal-rule">${escape(message)}</p><div class="signal-time">Index candle ended ${dateTime(row?.candle_end)}</div></article>`;
+    }
+    const call=row.side==='CE',premium=row.premium,quoteAge=Date.now()-Date.parse(premium?.fetched_at);
+    const quoted=!demo&&premium?.status==='available'&&Number.isFinite(quoteAge)&&quoteAge>=0&&quoteAge<=300000;
+    const levels=(data,prefix)=>`<dl class="option-levels"><div><dt>${prefix} entry reference</dt><dd>${money(data.entry)}</dd></div><div><dt>Stop / invalidation</dt><dd class="negative">${money(data.stop)}</dd></div><div><dt>Target 1 · 1R</dt><dd class="positive">${money(data.target1)}</dd></div><div><dt>Target 2 · 2R</dt><dd class="positive">${money(data.target2)}</dd></div></dl>`;
+    return `<article class="panel option-card"><div class="signal-top"><h2>${index.name}</h2><span class="pill ${call?'Bullish':'Bearish'}">${demo?'DEMO · ':''}${row.side} WATCH</span></div><p class="signal-rule">${escape(row.reason)}</p><div class="option-caption">UNDERLYING INDEX POINTS · ₹ PREMIUM LEVELS BELOW</div>${levels(row,'Index')}<p class="entry-rule"><strong>Conditional buy criterion:</strong> a new completed five-minute candle must close ${call?'above':'below'} ${money(row.entry)} while EMA/RSI remains ${call?'bullish':'bearish'}. Verify again at entry; skip if invalidated first. Wait for a new setup if the move has already run.</p><div class="premium-block"><h3>Option premium scenario</h3>${quoted?`<p>${escape(premium.trading_symbol)} · ${money(premium.strike)} ${row.side}<br>Expiry ${escape(premium.expiry)} · Lot ${escape(premium.lot_size)}</p>${levels(premium,'Ask')}<p>Bid ₹${money(premium.bid)} / ask ₹${money(premium.ask)}. Reference outlay per lot ₹${money(premium.premium_outlay)}; planned stop risk ₹${money(premium.planned_risk)} before costs. Maximum premium loss can be the full outlay.</p><p>Preset: -20% stop, +20% / +40% targets. Recalculate from actual fill. Quote retrieved ${dateTime(premium.fetched_at)}; exchange timestamp unavailable—verify broker quotes before considering entry.</p>`:`<p>${escape(premium?.status==='available'?'Quote retrieval is over five minutes old; premium entry and targets are withheld.':premium?.reason||'Option-chain quotes unavailable.')} Index levels above are not option buy prices.</p>`}</div><div class="exit-rule"><strong>Exit criteria</strong><ul><li>Stop reached or index crosses ${money(row.stop)} ${call?'downward':'upward'}.</li><li>Completed candle loses the original EMA/RSI alignment.</li><li>Consider partial exit at T1; remainder at T2.</li><li>30 minutes after entry or 15:15 IST, whichever comes first.</li></ul><p>Exits need live broker monitoring; this dashboard neither tracks fills nor places orders.</p></div><div class="signal-time">${demo?'DEMO · ':''}Index candle ended ${dateTime(row.candle_end)} · ${escape(item?.source||snapshot.source||'Fictional example')}</div></article>`;
+  }).join('');
+}
+function switchView(view){
+  const options=view==='options';
+  $('view-label').textContent=options?'CE / PE analysis':'Market overview';
+  $('overview-panel').hidden=options;$('options-panel').hidden=!options;
+  for(const name of ['overview','options']){const active=(name==='options')===options;$('tab-'+name).setAttribute('aria-selected',String(active));$('tab-'+name).tabIndex=active?0:-1;$('nav-'+name).classList.toggle('active',active);}
+}
+for(const name of ['overview','options']){
+  $('tab-'+name).addEventListener('click',()=>switchView(name));
+  $('nav-'+name).addEventListener('click',()=>switchView(name));
+  $('tab-'+name).addEventListener('keydown',event=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();const next=event.key==='Home'?'overview':event.key==='End'?'options':name==='overview'?'options':'overview';switchView(next);$('tab-'+next).focus();}});
+}
+$('nav-signals').addEventListener('click',()=>switchView('overview'));
 function chart(){
   clearTimeout(widgetTimer);
   $('chart-title').textContent=selected.name+' · '+selected.exchange;
@@ -70,4 +105,6 @@ $('watchlist').addEventListener('click',event=>{const row=event.target.closest('
 document.querySelectorAll('[data-exchange]').forEach(button=>button.addEventListener('click',()=>{exchange=button.dataset.exchange;document.querySelectorAll('[data-exchange]').forEach(b=>{b.classList.toggle('selected',b===button);b.setAttribute('aria-pressed',String(b===button));});render();}));
 $('search').addEventListener('input',render);$('signal-filter').addEventListener('change',render);$('refresh').addEventListener('click',refresh);
 $('demo-toggle').addEventListener('click',()=>{demo=!demo;if(demo){previousSnapshot=snapshot;snapshot=makeDemo();}else{snapshot=previousSnapshot||{items:[]};previousSnapshot=null;} $('refresh').disabled=demo;render();if(!demo)refresh();});
+if(globalThis.location?.hash==='#options')switchView('options');
+globalThis.addEventListener?.('hashchange',()=>switchView(globalThis.location.hash==='#options'?'options':'overview'));
 tick();render();chart();refresh();setInterval(tick,1000);setInterval(()=>{if(!document.hidden)refresh();},60000);setInterval(render,30000);
