@@ -3,14 +3,14 @@
   'use strict';
   const LOGIN_USERNAME = 'sarathkumar654@gmail.com';
   const PASSWORD_DIGEST = '3700adf1f25fab8202c1343c4b0b4e3fec706d57cad574086467b8b3ddf273ec';
-  const SESSION_KEY = 'marketpulse.ui-session.v1';
   const SESSION_MS = 8 * 60 * 60 * 1000;
   const page = new URL(location.href);
   const base = new URL('./', page);
+  const SESSION_KEY = 'marketpulse.ui-session.v2:' + base.pathname;
   const loginPage = page.pathname === new URL('login.html', base).pathname;
   function signedIn() {
     try {
-      const expires = Number(sessionStorage.getItem(SESSION_KEY));
+      const expires = Number(localStorage.getItem(SESSION_KEY));
       return Number.isFinite(expires) && expires > Date.now() && expires <= Date.now() + SESSION_MS;
     } catch { return false; }
   }
@@ -35,13 +35,22 @@
   }
   if (!loginPage && !signedIn()) { returnToLogin(); return; }
   if (loginPage && signedIn()) { location.replace(destination(page.searchParams.get('next'))); return; }
-  if (!loginPage) {
-    try { setTimeout(returnToLogin, Math.max(0, Number(sessionStorage.getItem(SESSION_KEY)) - Date.now())); }
-    catch { returnToLogin(); return; }
+  let expiryTimer;
+  function watchExpiry() {
+    clearTimeout(expiryTimer);
+    try { expiryTimer = setTimeout(returnToLogin, Math.max(0, Number(localStorage.getItem(SESSION_KEY)) - Date.now())); }
+    catch { returnToLogin(); }
   }
+  if (!loginPage) watchExpiry();
+  globalThis.addEventListener('storage', event => {
+    if (event.key !== SESSION_KEY && event.key !== null) return;
+    if (loginPage) { if (signedIn()) location.replace(destination(page.searchParams.get('next'))); return; }
+    if (!signedIn()) returnToLogin();
+    else watchExpiry();
+  });
   function bind() {
     document.getElementById('ui-logout')?.addEventListener('click', () => {
-      try { sessionStorage.removeItem(SESSION_KEY); } catch { /* No session can be read when storage is blocked. */ }
+      try { localStorage.removeItem(SESSION_KEY); } catch { /* No session can be read when storage is blocked. */ }
       location.replace(new URL('login.html', base).href);
     });
     const form = document.getElementById('login-form');
@@ -65,12 +74,12 @@
         if (name !== LOGIN_USERNAME || hex !== PASSWORD_DIGEST) {
           status.textContent = 'Incorrect username or password.'; password.focus(); return;
         }
-        sessionStorage.setItem(SESSION_KEY, String(Date.now() + SESSION_MS));
+        localStorage.setItem(SESSION_KEY, String(Date.now() + SESSION_MS));
         if (!signedIn()) throw Error('Storage unavailable');
         status.textContent = 'Signed in. Opening your workspace…';
         location.replace(destination(page.searchParams.get('next')));
       } catch {
-        status.textContent = 'Sign-in could not complete. Use HTTPS and allow session storage, then try again.';
+        status.textContent = 'Sign-in could not complete. Use HTTPS and allow browser storage, then try again.';
       } finally { value = ''; submitting = false; button.disabled = false; }
     });
   }

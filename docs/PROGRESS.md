@@ -79,3 +79,10 @@ After each approved module, record its plan scope, status, affected files, relev
 - Live prices, change from close and IST trade times require live packets, valid prices, recent exchange trades and recent receipts. Initial, future-dated and stale quotes are withheld; disconnect/heartbeat expiry clears the home table and existing cards return to labeled snapshots.
 - Relevant Node suites passed. Browser fixtures verified cross-tab home prices, freshness, disconnect behavior and a 390px mobile layout. Per-tab UI access was initialized for the fixture; this was not a real broker authentication check.
 - Status: complete and published. [Deployment 44266239693](https://github.com/sevendreamzone1/market-pulse/actions/runs/44266239693) succeeded for commit `f0f7832`; public index.html, quote renderer and responsive styles were verified. Real broker session availability remains dependent on the user connecting the live tab.
+
+## Shared home/live login - 2026-11-18
+- User-requested change: one browser sign-in for both home and live pages. Replaced the per-tab flag with a site-path-scoped, eight-hour shared UI marker; no entered password or broker credential is persisted.
+- Storage events propagate logout and storage clearing to other tabs, resume an open login page after sign-in elsewhere, and reschedule expiry when the shared deadline changes.
+- Updated home/live/login copy and current architecture documentation. Broker authorization is still a separate connection step; this remains a bypassable browser UI gate, not private hosting.
+- Relevant login, dashboard, broker-decoder and live-viewer tests passed. The browser fixture proved one sign-in opens a new live tab directly and logout from live returns both tabs to login, including mobile layout checks.
+- Status: implementation and verification complete; publication pending.

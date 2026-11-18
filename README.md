@@ -10,7 +10,7 @@ Includes TradingView charts, an eight-company watchlist, NIFTY 50 / BANK NIFTY /
 
 ## Browser-only sign-in
 
-Opening the dashboard or live page redirects to `login.html` until the configured owner credentials match. Successful sign-in returns to the home page or an allowed local return destination; Logout removes the per-tab marker. The session lasts up to eight hours and is separate for each browser tab. No database or backend was added. The fixed username and password digest are configured in `login.js`; entered passwords and broker tokens are never stored by this gate.
+Opening the dashboard or live page redirects to `login.html` until the configured owner credentials match. Successful sign-in returns to the home page or an allowed local return destination; Logout removes the shared marker and sends other open dashboard/live tabs back to sign-in. One site sign-in lasts up to eight hours across tabs in the same browser profile and site path. No database or backend was added. The fixed username and password digest are configured in `login.js`; entered passwords and broker tokens are never stored by this gate.
 
 This is the user's requested convenience UI gate, **not private hosting or server-side authentication**. The check and session flag can be bypassed, and direct assets/market JSON remain publicly accessible. Do not reuse an important account password for this publicly inspectable configuration. The Upstox token/one-time URL flow remains separate.
 
@@ -39,7 +39,7 @@ The dependency-free decoder handles LTPC plus full-feed index and option depth f
 
 ## Live CE / PE scenarios across the app
 
-The live page and a shared panel above both dashboard tabs show NIFTY 50, BANK NIFTY and SENSEX scenarios. Connect once on `live.html` and keep it open in the same browser and origin. An in-memory BroadcastChannel shares only quotes and scenario outputs, never the access token or socket URL. Index cards and watchlist prices use fresh broker quotes when available, explicitly labeled live; technical indicators retain their own candle timestamps. After five seconds without the live tab heartbeat, the dashboard clears live scenarios and falls back to labeled snapshot prices. Broker credentials and live scenario state are not persisted. The separate convenience login stores only a per-tab UI access marker.
+The live page and a shared panel above both dashboard tabs show NIFTY 50, BANK NIFTY and SENSEX scenarios. Connect once on `live.html` and keep it open in the same browser and origin. An in-memory BroadcastChannel shares only quotes and scenario outputs, never the access token or socket URL. Index cards and watchlist prices use fresh broker quotes when available, explicitly labeled live; technical indicators retain their own candle timestamps. After five seconds without the live tab heartbeat, the dashboard clears live scenarios and falls back to labeled snapshot prices. Broker credentials and live scenario state are not persisted. The separate convenience login stores only a shared UI access marker.
 
 A buy candidate requires all of the following: a directional full-strategy snapshot no older than ten minutes; a matching future-expiry contract with option ATR/risk metadata retrieved within five minutes; fresh live index and option trades within 30 seconds and packets within five seconds; uncrossed bid/ask spread <=5%; traded volume and depth >=one lot; and a newly completed five-minute candle beyond the underlying trigger. The live candle must be observed from its first ten seconds with no sample gap over 30 seconds. Initial snapshots, partial candles and reconnect gaps never confirm an entry. Entries are restricted to 09:30?14:45 IST weekdays; exchange holidays are not independently checked. Skip moves that have already passed either the original index or premium T1.
 
@@ -49,7 +49,7 @@ This is live **confirmation and monitoring of the full strategy snapshot**, not 
 
 ## Live prices on the home page
 
-The home page shows a **Live market prices** table above the analysis panel. Select **Connect live feed**, sign in to the new tab if prompted, authorize Upstox there, and keep that tab open in the same browser. Subscribed index, watchlist and option quotes appear automatically with LTP, change from close, exchange trade time and freshness.
+The home page shows a **Live market prices** table above the analysis panel. Select **Connect live feed**; the live tab shares your site sign-in. Authorize Upstox there, and keep that tab open in the same browser. Subscribed index, watchlist and option quotes appear automatically with LTP, change from close, exchange trade time and freshness.
 
 Only fresh live-update packets are shown as live. Trades older than 30 seconds, packets received more than five seconds ago, initial snapshots and future timestamps are withheld. Disconnected/waiting rows show no live price; the existing index/watchlist cards can still show explicitly labeled snapshot prices. Demo mode hides real live panels. No additional broker connection, backend or credential storage was added, and strategy calculations remain five-minute snapshots.
 
