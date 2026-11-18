@@ -4,9 +4,9 @@ Status recorded: 2026-11-18 (Asia/Colombo). This document records implementation
 
 ## Current development state
 - Environment setup: complete and validated.
-- Application development plan: `MP-PLAN-001`, revision 1, **MODULE 1 FOCUSED REPAIR APPROVED**.
+- Application development plan: `MP-PLAN-001`, revision 1, **MODULE 1 FOCUSED REPAIR COMPLETE AND PUBLISHED**.
 - Approval evidence: user replied "approved" on 2026-11-18 to Module 1's focused repair and publication request. Other proposed modules remain unapproved.
-- Current task scope: refresh diagnosis, clear stale-model/disconnected-feed/fresh-NO-TRADE presentation, recovery tests and focused publication. Existing application features below predate this repair.
+- Completed scope: refresh diagnosis, clear stale-model/disconnected-feed/fresh-NO-TRADE presentation, recovery tests and focused publication. Existing application features below predate this repair.
 
 ## Existing application
 - Implemented: static overview/CE-PE dashboard, provider pipeline, full strategy catalog, premium risk scenarios, personal full-mode Upstox stream, live scenario confirmation/monitoring, and shared dashboard display.
@@ -48,11 +48,12 @@ After each approved module, record its plan scope, status, affected files, relev
 - No runtime edits, workflow dispatch, secret changes or deployment were performed. Module 1 repair scope is prepared in the development plan and still awaits approval.
 
 ## Module 1 execution - 2026-11-18
-- Status: implementation and local checks complete; publication verification pending.
+- Status: complete and published. [Deployment 44247665180](https://github.com/sevendreamzone1/market-pulse/actions/runs/44247665180) succeeded for repair commit `a114a53`.
 - Scope approved: user replied "approved" to the focused repair/publication request; Modules 2 through 4 remain unapproved.
 - Manual refresh [44246910984](https://github.com/sevendreamzone1/market-pulse/actions/runs/44246910984) succeeded. Public Upstox data was rebuilt at 11:19 IST using today's 11:15 candles with no provider errors. This establishes snapshot API access at that time, not an authenticated browser WebSocket session.
 - The refreshed model had conditional PE setups for NIFTY/SENSEX and no directional agreement for BANK NIFTY. NIFTY's premium risk check rejected its candidate; no thresholds were relaxed to manufacture an entry.
 - Changed `live-setups.mjs`, `live-dashboard.mjs`, `live-panel.mjs` and `app.js` to distinguish stale/missing analysis, disconnected live confirmation, option-data blockers and fresh NO TRADE. Added public-snapshot events so the dashboard can diagnose stale analysis even without a live tab, reusing its existing fetch.
 - Added regression coverage in the three affected Node test files for previous-session analysis plus fresh ticks, fresh-model recovery, stale-consensus suppression, disconnected heartbeat handling and option-data reasons.
 - Verification: all 34 Python tests and all five existing Node suites passed. Browser fixtures verified 390px layout, cross-tab live prices, credential clearing, disconnect behavior, stale-to-fresh NO TRADE recovery and the separate disconnected state.
+- Public verification at 11:27 IST: the new diagnostic code was served in all three changed shared modules; Upstox data was built at 11:26 IST with 11:25 candles for all three indices, no refresh errors and a candle age of about 2.5 minutes. NIFTY/SENSEX then had conditional PE scenarios with available premium references; BANK NIFTY was NO TRADE. These were snapshot scenarios, not authenticated live entry confirmations.
 - Limits: GitHub schedule delivery latency remains outside a static-site guarantee; users can inspect/run the linked refresh workflow. The user's real browser connection and actual trading fills remain unverified.

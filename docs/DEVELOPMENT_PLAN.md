@@ -3,7 +3,7 @@
 ## Approval record
 - Plan ID: `MP-PLAN-001`, revision 1.
 - Prepared: 2026-11-18, Asia/Colombo.
-- Status: **MODULE 1 FOCUSED REPAIR APPROVED**; other proposed modules await approval.
+- Status: **MODULE 1 FOCUSED REPAIR COMPLETE AND PUBLISHED**; other proposed modules await approval.
 - Approval evidence: user replied "approved" on 2026-11-18 to the request to approve Module 1's focused repair and publication.
 - Authorized now: the focused Module 1 scope below, its tests and publication, plus agent documentation maintenance.
 - Outside this approval: unrelated runtime refactors, dependency additions, infrastructure changes, and implementation of Modules 2 through 4.
@@ -33,8 +33,8 @@ Do not add framework migrations, separate services, databases, exhaustive proces
 | Delivery | GitHub Actions checks, snapshot refresh, Pages deployment | Publish explicit static assets; inspect the actual run |
 | Agent guidance | Root instructions, project docs, nine scoped skills | Validate metadata and documentation links |
 
-## Proposed next modules - not started
-This is a suggested sequence for review, not a commitment to implement the full backlog. Each module needs its data inputs and final scope confirmed in the approved plan.
+## Development modules
+Module 1's approved focused repair is complete. Modules 2 through 4 are suggestions for review, not commitments or approved implementation work. Each subsequent module needs its data inputs and final scope confirmed in the approved plan.
 
 | Order | Module and boundary | Acceptance evidence | Dependencies |
 | --- | --- | --- | --- |
@@ -45,7 +45,7 @@ This is a suggested sequence for review, not a commitment to implement the full 
 
 Persistent services, databases, order execution and hosting migration remain outside this proposal unless separately requested. No module can promise a 90% success rate; statistical evidence must precede accuracy claims.
 
-## Module 1 focused repair - approved, in progress
+## Module 1 focused repair - complete and published
 Evidence recorded in [PROGRESS.md](PROGRESS.md): on 18 November at 11:10 IST the public model still used previous-session candles; the enabled workflow had no observed current-day run. Fresh socket quotes cannot satisfy the model-age gate.
 
 Proposed scope for approval:
@@ -55,6 +55,8 @@ Proposed scope for approval:
 4. Publish the focused change if this scope is approved, verify the workflow and public data, and record what remains unverified about the personal live connection.
 
 Acceptance: stale analysis is identified as a data blocker rather than current market neutrality; fresh data recovery is demonstrated with fixtures and a deployed timestamp check when upstream access succeeds. GitHub scheduling latency cannot be guaranteed by a static-site change. No change to strategy thresholds, new backend, credential storage or automatic orders is proposed.
+
+Completion evidence: [deployment 44247665180](https://github.com/sevendreamzone1/market-pulse/actions/runs/44247665180) succeeded for repair commit `a114a53`. At 11:27 IST on 18 November, the public diagnostic modules were verified and all three index candles ended at 11:25 IST with no refresh errors. Relevant regression suites and browser fixture checks passed; see [progress](PROGRESS.md). The user's authenticated browser stream remains a separate verification limit.
 
 ## Security and testing standards
 - Apply root `AGENTS.md` credential, input-validation and trust-boundary rules to every approved module.
