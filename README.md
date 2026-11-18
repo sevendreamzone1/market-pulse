@@ -60,14 +60,16 @@ The shared live panel and CE/PE tab distinguish stale data from market neutralit
 - **WAIT FOR ANALYSIS:** no strategy snapshot has loaded yet.
 - **STALE ANALYSIS:** the model candle is over ten minutes old or its timestamp is invalid. Fresh live ticks cannot make that model current.
 - **LIVE FEED DISCONNECTED:** a directional model is fresh, but live confirmation is not connected or its tab heartbeat expired.
-- **NO TRADE:** fresh categories do not support an entry, or a later risk gate rejects the setup. Read the reason; this is not a promise that a trade will appear.
+- **NO TRADE:** fresh trend-breakout checks are mixed or flat, or a later risk gate rejects the setup. Read the reason; this is not a promise that a trade will appear.
+- **WAIT FOR METHOD / METHOD DATA UNAVAILABLE:** an old decision model or missing candle history cannot authorize a trade.
+- **WATCH EXPIRED:** the pinned watch missed confirmation or expired; wait for a new snapshot.
 - **WAIT FOR OPTION DATA / WAIT FOR LIVE OPTION:** the model needs usable premium risk metadata or fresh option depth before confirmation.
 
 Each live card shows its strategy candle time. If analysis is stale, use **Open market-data refresh workflow**, run the existing workflow and inspect its result. The dashboard's Refresh data button only reloads published JSON; it cannot trigger an upstream broker refresh. The main dashboard can diagnose the loaded model without a connected live tab and without a second snapshot poll. GitHub's scheduled refresh can be delayed, and manual refresh can still fail if upstream credentials/access are invalid. A configured provider or open socket is not proof of fresh data.
 
 ## Trend-breakout CE / PE scenarios and optional diagnostics
 
-The second tab evaluates the complete requested catalog, with the exact rule and measurements shown per indicator. It uses **completed five-minute candles**, not live ticks. GitHub Pages cannot run a continuous stream-processing backend. Scheduled Actions refresh the analysis and the browser reads the latest published snapshot. The UI does not label these snapshots as tick-live.
+The second tab shows the five-minute trend-breakout decision and its checks first. The previously requested catalog remains expandable diagnostics, with exact rules and measurements per indicator. It uses **completed five-minute candles**, not live ticks. GitHub Pages cannot run a continuous stream-processing backend. Scheduled Actions refresh the analysis and the browser reads the latest published snapshot. The UI does not label these snapshots as tick-live.
 
 | Category | Implemented rules |
 | --- | --- |

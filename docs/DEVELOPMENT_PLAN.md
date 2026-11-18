@@ -100,7 +100,7 @@ The user requested one login for home and the live feed. Replace the initial per
 
 
 ## Approved replacement signal engine - MP-PLAN-002, revision 1
-Status: approved for implementation and existing GitHub Pages publication. Approval evidence: after reviewing MP-PLAN-002, the user requested "can you figure out and configure code accordingly". This approves the concrete replacement method and its verification. Implementation, regression suites and fictional browser verification are complete; GitHub publication is pending.
+Status: approved for implementation and existing GitHub Pages publication. Approval evidence: after reviewing MP-PLAN-002, the user requested "can you figure out and configure code accordingly". This approves the concrete replacement method and its verification. Implementation, regression suites and fictional browser verification are complete. Published successfully in [deployment 44296520955](https://github.com/sevendreamzone1/market-pulse/actions/runs/44296520955), commit `5fceb83`; public code and all three index method identifiers were verified.
 
 Request evidence: the user asked whether the supplied strategy catalog drives recommendations, and requested replacing it with a method selected by the architect. This replaces decision authority, rather than relaxing the existing catalog's agreement threshold. Root AGENTS.md requires review/approval of the concrete plan before this material strategy change.
 
