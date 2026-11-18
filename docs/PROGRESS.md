@@ -7,7 +7,7 @@ Status recorded: 2026-11-18 (Asia/Colombo). This document records implementation
 - Application development plan: `MP-PLAN-001`, revision 1, **MODULE 1 FOCUSED REPAIR COMPLETE AND PUBLISHED**.
 - Approval evidence: user replied "approved" on 2026-11-18 to Module 1's focused repair and publication request. Other proposed modules remain unapproved.
 - Completed scope: refresh diagnosis, clear stale-model/disconnected-feed/fresh-NO-TRADE presentation, recovery tests and focused publication. Existing application features below predate this repair.
-- Module 5: user clarified and approved a fixed-credential browser-only login on existing Pages hosting. Implementation and local verification are complete; publication is pending. This does not provide private access.
+- Module 5: user clarified and approved a fixed-credential browser-only login on existing Pages hosting. Implementation, local verification and publication are complete. This does not provide private access.
 
 ## Existing application
 - Implemented: static overview/CE-PE dashboard, provider pipeline, full strategy catalog, premium risk scenarios, personal full-mode Upstox stream, live scenario confirmation/monitoring, and shared dashboard display.
@@ -71,4 +71,4 @@ After each approved module, record its plan scope, status, affected files, relev
 - The fixed browser username/password digest and session flag are bypassable. Direct Pages assets/market JSON remain public; no private-access or server-authentication claim is made.
 - Added a fictional-configuration login regression suite covering matching/mismatched credentials, local return links, rejected external redirects, expiry, storage failure, cleared password fields and Logout; added it and the three new assets to the existing Actions workflow.
 - All six Node suites passed. A local browser fixture verified the form flow, home deep link, Logout and 390px login/dashboard layout without using the owner's real password.
-- Status: publication pending. No database, backend, hosting migration or broker-login change was introduced.
+- Status: complete and published. [Deployment 44254044485](https://github.com/sevendreamzone1/market-pulse/actions/runs/44254044485) succeeded for commit `1626c17`; public login.html/login.js, the dashboard guard and live-page Logout control were verified. No database, backend, hosting migration or broker-login change was introduced.

@@ -3,7 +3,7 @@
 ## Approval record
 - Plan ID: `MP-PLAN-001`, revision 1.
 - Prepared: 2026-11-18, Asia/Colombo.
-- Status: **MODULE 1 COMPLETE; MODULE 5 BROWSER-ONLY LOGIN APPROVED**. Modules 2 through 4 and server-side hosting changes remain unapproved.
+- Status: **MODULE 1 AND MODULE 5 BROWSER-ONLY LOGIN COMPLETE AND PUBLISHED**. Modules 2 through 4 and server-side hosting changes remain unapproved.
 - Approval evidence: user replied "approved" on 2026-11-18 to the request to approve Module 1's focused repair and publication.
 - Authorized now: Module 1 maintenance and the clarified Module 5 browser-only login, their tests and existing Pages publication, plus agent documentation maintenance.
 - Outside this approval: unrelated runtime refactors, dependency additions, infrastructure changes, and implementation of Modules 2 through 4.
@@ -85,4 +85,4 @@ No login implementation, credential storage, hosting migration, repository-visib
 ### Approved replacement: browser-only login
 The user clarified: "a page where credentials enter if matches display home page ... no database ... hard coded login." This authorizes the narrower UI implementation and existing GitHub Pages publication; it does not authorize a hosting migration or establish private access.
 
-Implement a matching login screen, fixed owner username/password digest, per-tab session marker, home/live-page redirects and Logout. Never store the entered password or broker credentials. Preserve safe local return destinations and existing live-feed isolation. Test wrong/correct credentials with fictional configuration, redirect safety, session expiry, storage failure and logout. Clearly state that direct files/JSON remain public and the UI gate is bypassable. Status: implementation and automated checks complete; browser verification and publication pending.
+Implement a matching login screen, fixed owner username/password digest, per-tab session marker, home/live-page redirects and Logout. Never store the entered password or broker credentials. Preserve safe local return destinations and existing live-feed isolation. Test wrong/correct credentials with fictional configuration, redirect safety, session expiry, storage failure and logout. Clearly state that direct files/JSON remain public and the UI gate is bypassable. Status: complete and published. Deployment 44254044485 succeeded for commit `1626c17`; the public login form, script, dashboard guard and live-page Logout control were verified.
