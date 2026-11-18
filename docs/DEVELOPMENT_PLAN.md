@@ -67,3 +67,17 @@ Completion evidence: [deployment 44247665180](https://github.com/sevendreamzone1
 
 ## Completion criteria
 A module is complete when the requested behavior is implemented, relevant checks pass, limitations are recorded, and publication is verified if publication was requested. Fixture tests are not evidence of live broker entitlement or investment accuracy.
+
+## Module 5 - private owner login proposal, awaiting approval
+Requested outcome: a login page that prevents unauthenticated public access. A JavaScript username/password check on the existing public GitHub Pages site cannot enforce that outcome; visitors can inspect or bypass it and directly fetch the public market JSON.
+
+Proposed minimal architecture:
+1. Select hosting that can enforce server-side access control before serving protected content. Keep the existing frontend modules and GitHub source repository; avoid a frontend framework migration or a database for this single-owner account.
+2. Store the owner username and a salted password hash in server-side secret configuration. Do not commit the supplied password or embed it, a password-equivalent hash, or an authentication secret in public JavaScript.
+3. Serve a login form with server-validated credentials, rate-limited attempts, expiring Secure/HttpOnly/SameSite sessions, logout and fail-closed behavior when secret configuration is missing.
+4. Require authentication for dashboard, live page and market JSON routes. Ensure protected market data has no public repository, artifact or legacy Pages copy that bypasses login; plan the publication cutover accordingly. Public source code can remain public if it contains no protected data or credentials.
+5. Verify unauthenticated direct URLs cannot retrieve protected content, incorrect passwords fail, sessions expire/logout, and existing market logic remains intact.
+
+Approval needed: replacing public Pages delivery with authenticated hosting and the chosen hosting destination. The previous Module 1 approval does not cover this architecture change. GitHub Enterprise Cloud organization private Pages is a separate access-control option using GitHub identity, not a custom hardcoded owner password.
+
+No login implementation, credential storage, hosting migration, repository-visibility change or unpublishing has been performed under this proposal. Keep credential values out of planning/progress documents.

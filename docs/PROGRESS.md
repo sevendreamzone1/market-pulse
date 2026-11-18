@@ -57,3 +57,9 @@ After each approved module, record its plan scope, status, affected files, relev
 - Verification: all 34 Python tests and all five existing Node suites passed. Browser fixtures verified 390px layout, cross-tab live prices, credential clearing, disconnect behavior, stale-to-fresh NO TRADE recovery and the separate disconnected state.
 - Public verification at 11:27 IST: the new diagnostic code was served in all three changed shared modules; Upstox data was built at 11:26 IST with 11:25 candles for all three indices, no refresh errors and a candle age of about 2.5 minutes. NIFTY/SENSEX then had conditional PE scenarios with available premium references; BANK NIFTY was NO TRADE. These were snapshot scenarios, not authenticated live entry confirmations.
 - Limits: GitHub schedule delivery latency remains outside a static-site guarantee; users can inspect/run the linked refresh workflow. The user's real browser connection and actual trading fills remain unverified.
+
+## Private login request - proposal only
+- The user requested a single-owner login and exclusion of public visitors.
+- Existing public GitHub Pages cannot enforce a custom server-side username/password session; a frontend password comparison would leave direct routes and market JSON accessible.
+- Prepared Module 5's minimal server-authentication and publication-cutover plan. Credentials supplied in chat were not copied into source or documentation.
+- Awaiting approval for the authentication/hosting architecture change under the existing plan-approval rule. No runtime, repository visibility or deployment changes were made; the current site remains public.
