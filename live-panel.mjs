@@ -1,11 +1,38 @@
 const money=value=>Number.isFinite(value)?new Intl.NumberFormat('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}).format(value):'—';
 const node=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;if(cls)e.className=cls;return e;};
+const timestamp=value=>Number.isFinite(value)&&value>0?new Intl.DateTimeFormat('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).format(new Date(value)):'—';
+function renderScenarioTable(rows){
+  const wrap=node('div',undefined,'live-trade-table-wrap');
+  wrap.tabIndex=0;wrap.role='region';wrap.ariaLabel='Live entry and exit summary; scroll horizontally for all columns';
+  const table=node('table',undefined,'live-trade-table');
+  table.append(node('caption','Current CE / PE scenarios · times in IST · option prices in ₹'));
+  const head=node('thead'),header=node('tr');
+  for(const title of ['Index / contract','Status','Side','Entry observed IST','Entry ask ₹','SL ₹','T1 ₹','T2 ₹','Time exit due IST','Exit observed IST','Exit bid ₹','Exit quote IST']){const th=node('th',title);th.scope='col';header.append(th);}
+  head.append(header);table.append(head);
+  const body=node('tbody');
+  for(const row of rows){
+    const tr=node('tr'),confirmed=Number.isFinite(row.triggeredAt)&&row.triggeredAt>0;
+    const identity=node('th',row.name);identity.scope='row';
+    if(row.contract)identity.append(node('small',row.contract+' · '+row.expiry));
+    tr.append(identity);
+    const status=node('td',row.state);status.append(node('small',row.reason));tr.append(status);
+    for(const value of [row.side||'—',confirmed?timestamp(row.triggeredAt):row.contract?'Awaiting confirmation':'—',row.contract?money(row.entry)+(confirmed?'':' (watch)'):'—',row.contract?money(row.stop):'—',row.contract?money(row.target1):'—',row.contract?money(row.target2):'—',timestamp(row.exitDueAt),timestamp(row.exitAt),money(row.exitBid),timestamp(row.exitQuoteTime)])tr.append(node('td',value));
+    body.append(tr);
+  }
+  table.append(body);wrap.append(table);return wrap;
+}
 export function renderLivePanel(container,rows,connected){
+  const previous=container.querySelector?.('.live-trade-table-wrap');
+  const scrollLeft=previous?.scrollLeft||0,focused=previous&&document.activeElement===previous;
   container.replaceChildren();
   container.append(node('h2','Live CE / PE trade scenarios'));
   container.append(node('p',connected?'Live feed connected · levels below are research scenarios; no orders or fills are tracked.':'Connect Live API quotes in another tab and keep it open. Credentials stay in that tab.'));
   const refresh=node('a','Open market-data refresh workflow');refresh.href='https://github.com/sevendreamzone1/market-pulse/actions/workflows/pages.yml';refresh.target='_blank';refresh.rel='noopener noreferrer';container.append(refresh);
   container.append(node('p','Refresh data on this page only reloads the published snapshot. If analysis is stale, run the workflow above and check its result. An open socket alone does not establish fresh strategy data.'));
+  const tableWrap=renderScenarioTable(rows);
+  container.append(tableWrap,node('p','Watch prices are conditional references, not entries. Entry time is the observed confirmation; exit time is when this browser detected an exit condition. Exit bid is captured only from a fresh, uncrossed quote, not an executed fill. Dashes mean unavailable or not yet observed. Current session only; disconnecting clears scenarios.'));
+  tableWrap.scrollLeft=scrollLeft;
+  if(focused)tableWrap.focus({preventScroll:true});
   const grid=node('div',undefined,'live-setup-grid');
   for(const row of rows){
     const card=node('article',undefined,'live-setup-card');

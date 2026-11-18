@@ -86,3 +86,12 @@ After each approved module, record its plan scope, status, affected files, relev
 - Updated home/live/login copy and current architecture documentation. Broker authorization is still a separate connection step; this remains a bypassable browser UI gate, not private hosting.
 - Relevant login, dashboard, broker-decoder and live-viewer tests passed. The browser fixture proved one sign-in opens a new live tab directly and logout from live returns both tabs to login, including mobile layout checks.
 - Status: complete and published. [Deployment 44286718036](https://github.com/sevendreamzone1/market-pulse/actions/runs/44286718036) succeeded for commit `54ecdef`; the public shared-login script and home/live page copy were verified.
+
+
+## Live scenario entry/exit table - 2026-11-18
+- User approved the table extension with "update this to live also" after reviewing the latest-setup table.
+- Reused the shared panel on home/live for index and contract, CE/PE status, observed entry time/ask, SL, T1/T2, time-exit deadline, observed exit time and fresh exit bid/quote time. Watch references and unavailable values are explicit; no signal gates or strategy thresholds changed.
+- Added latched, session-only exit observations in `live-setups.mjs`. Missing/stale/crossed option quotes cannot supply an exit price, and subsequent ticks cannot overwrite the captured exit. No actual fills or historical ledger are tracked.
+- Relevant scenario, shared-dashboard and live-viewer regression suites and JavaScript syntax checks passed. Added coverage for entry/exit timestamps, fixed bid observations, absent/stale/crossed exit quotes, watch/no-trade presentation and safe table labels.
+- Hidden-browser fictional fixture verified IST entry/exit values, 390px page fit, horizontal table scrolling and focus/scroll retention during redraws. No owner broker credentials were used.
+- Status: verified locally; GitHub publication pending.

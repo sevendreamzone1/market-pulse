@@ -71,6 +71,9 @@ Approval evidence: the user requested "need to show live market datas in home pa
 Added a visible home-page table for subscribed indices, equities and option contracts, with live price, change, trade time, freshness and a connection link. Only live packets with trades within 30 seconds and receipt within five seconds may appear as live. Preserve snapshot fallback in existing cards, disconnect clearing, demo isolation and separate strategy timestamps. Existing regression tests and a browser fixture verified those boundaries and a 390px layout. Status: complete and published. Deployment 44266239693 succeeded for commit `f0f7832`; the public home-page table, renderer and responsive styles were verified.
 
 ## Completion criteria
+### Live entry and exit table - approved extension
+Approval evidence: the user requested "update this to live also" after reviewing the entry-time/price, targets, stop-loss and exit table. Reuse the shared live panel on home and live pages; add current-scenario rows and session-only exit observation metadata. Preserve all existing signal gates. Show pending/unavailable values explicitly, separate watch references from confirmed triggers, and never describe observed bids as actual fills. Verify timestamp/price latching, absent/stale exit quotes, safe rendering and mobile table scrolling. This does not introduce a historical paper-trading ledger, storage, new strategy rules or backend. Status: verified locally; GitHub publication pending.
+
 A module is complete when the requested behavior is implemented, relevant checks pass, limitations are recorded, and publication is verified if publication was requested. Fixture tests are not evidence of live broker entitlement or investment accuracy.
 
 ## Module 5 - original private login proposal, superseded

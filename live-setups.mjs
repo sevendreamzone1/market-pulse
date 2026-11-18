@@ -29,16 +29,22 @@ export class LiveSetups {
     for(const state of this.active.values())this.observe(state,now);
   }
   fresh(key,now){const q=this.quotes.get(key);return q&&q.live&&now-q.receivedAt<=5000&&quoteStatus(q,now)==='Fresh trade'?q:null;}
+  recordExit(state,reason,now){
+    if(state.exit)return;
+    const option=this.fresh(state.key,now);
+    const quoted=option&&positive(option.bid)&&positive(option.ask)&&option.bid<=option.ask;
+    Object.assign(state,{exit:reason,exitAt:now,exitBid:quoted?option.bid:null,exitQuoteTime:quoted?option.ltt:null});
+  }
   observe(state,now){
     if(state.exit)return;
     const index=this.fresh(indexKeys[state.ticker],now),option=this.fresh(state.key,now);
     const minute=session(now).minute;
-    if(now-state.triggeredAt>=1800000||minute>=915){state.exit='TIME EXIT';return;}
-    if(index&&(state.side==='CE'?index.ltp<=state.indexStop:index.ltp>=state.indexStop)){state.exit='INDEX STOP HIT';return;}
+    if(now-state.triggeredAt>=1800000||minute>=915){this.recordExit(state,'TIME EXIT',now);return;}
+    if(index&&(state.side==='CE'?index.ltp<=state.indexStop:index.ltp>=state.indexStop)){this.recordExit(state,'INDEX STOP HIT',now);return;}
     // Long options are closed at bid, never at the ask or the last trade.
     if(option&&positive(option.bid)&&positive(option.ask)&&option.bid<=option.ask){
-      if(option.bid<=state.stop)state.exit='SL HIT';
-      else if(option.bid>=state.target2){state.t1=true;state.exit='TARGET 2 HIT';}
+      if(option.bid<=state.stop)this.recordExit(state,'SL HIT',now);
+      else if(option.bid>=state.target2){state.t1=true;this.recordExit(state,'TARGET 2 HIT',now);}
       else if(option.bid>=state.target1)state.t1=true;
     }
   }
@@ -53,7 +59,7 @@ export class LiveSetups {
       if(active){
         this.observe(active,now);
         const validModel=row&&ageOK(row.candle_end,600000,now);
-        if(validModel&&(row.status!=='conditional'||row.side!==active.side))active.exit||='CONFLUENCE LOST';
+        if(validModel&&(row.status!=='conditional'||row.side!==active.side))this.recordExit(active,'CONFLUENCE LOST',now);
         if(active.exit)this.completed.set(active.id,active.exit);
         const fresh=connected&&this.fresh(key,now)&&this.fresh(active.key,now);
         const depth=this.fresh(active.key,now);
@@ -84,7 +90,7 @@ export class LiveSetups {
       const levels={entry,stop,target1:rounded(entry+risk,true),target2:rounded(entry+2*risk,true),key:p.instrument_key,contract:p.trading_symbol,expiry:p.expiry,lot:p.lot_size,indexEntry:row.entry,indexStop:row.stop,indexTarget1:row.target1,indexTarget2:row.target2,agreement:row.strategy_report.consensus.agreement_pct,candle_end:row.candle_end,current:option.ltp,bid:option.bid};
       const bar=this.closed.get(key),confirmed=bar&&bar.end>Date.parse(row.candle_end)&&now-bar.end>=0&&now-bar.end<=30000&&(row.side==='CE'?bar.close>row.entry:bar.close<row.entry);
       if(!confirmed)return {...base,...levels,state:'WATCH '+row.side,reason:'Wait for a fully observed five-minute close '+(row.side==='CE'?'above ':'below ')+row.entry+'. Live ask references update until confirmation.'};
-      const state={...levels,ticker,name:base.name,side:row.side,id,triggeredAt:now,t1:false,exit:null};
+      const state={...levels,ticker,name:base.name,side:row.side,id,triggeredAt:now,exitDueAt:Math.min(now+1800000,Date.parse(clock.date+'T15:15:00+05:30')),t1:false,exit:null};
       this.active.set(ticker,state);
       return {...base,...state,state:'BUY '+row.side+' TRIGGERED',reason:'Completed live candle confirmed the breakout with fresh option depth. Indicative ask reference; verify your actual fill.',monitor:true};
     });

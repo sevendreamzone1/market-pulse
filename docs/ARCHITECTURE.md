@@ -58,6 +58,8 @@ The main app publishes its already-loaded public snapshot through `marketpulse-s
 
 The full strategy catalog still uses completed-candle snapshots. Live monitoring does not imply full indicator recalculation on every tick, a shared public account stream, exchange-fresh Greeks, actual order execution, or fill tracking.
 
+The shared live panel includes a current-scenario table on home and live pages: contract/side/status, observed entry time and ask reference, premium SL/T1/T2, time-exit deadline, observed exit time, and a captured option bid with its exchange timestamp. `live-setups.mjs` latches exit metadata at the first observed exit condition; stale/missing/crossed option quotes produce no exit price. Watch references have no entry time. Times are IST, prices are premium rupees, and none are actual broker fills. This is session-only scenario presentation, cleared on disconnect, not a historical paper-trading ledger. The table scrolls horizontally on narrow screens and retains its scroll/focus during live redraws.
+
 The home-page live-price table is rendered by `live-dashboard.mjs` from the same quote channel. It shows instrument labels, LTP, change from close, exchange trade time and freshness. Quotes must be live updates with a positive finite price, trade age at most 30 seconds and receipt age at most five seconds; initial, future and stale values are withheld. The filtered quotes also drive existing index/watchlist overrides. No broker credential is entered or stored on the home page, and no extra socket or polling pipeline was added.
 
 ## Trust and persistence
