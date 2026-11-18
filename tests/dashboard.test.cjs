@@ -28,6 +28,7 @@ vm.runInContext(source,context);
   assert.doesNotMatch(elements.get('watchlist').innerHTML,/1282/);
   elements.get('demo-toggle').listeners.click();
   assert.match(elements.get('data-notice').textContent,/DEMO MODE/);
+  assert.equal(elements.get('home-live-market').hidden,true);
   assert.match(elements.get('signal-grid').innerHTML,/Bullish · DEMO/);
   assert.equal(elements.get('refresh').disabled,true);
   elements.get('search').value='Infosys';elements.get('search').listeners.input();

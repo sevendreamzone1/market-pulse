@@ -47,6 +47,12 @@ Before confirmation, WATCH CE/PE displays changing ask references. Confirmation 
 
 This is live **confirmation and monitoring of the full strategy snapshot**, not recalculation of every indicator on every tick. Strategy/OI/Greeks context still refreshes through GitHub Actions; completed-candle data, broker entitlements and browser connectivity determine availability. No validated win rate is claimed.
 
+## Live prices on the home page
+
+The home page shows a **Live market prices** table above the analysis panel. Select **Connect live feed**, sign in to the new tab if prompted, authorize Upstox there, and keep that tab open in the same browser. Subscribed index, watchlist and option quotes appear automatically with LTP, change from close, exchange trade time and freshness.
+
+Only fresh live-update packets are shown as live. Trades older than 30 seconds, packets received more than five seconds ago, initial snapshots and future timestamps are withheld. Disconnected/waiting rows show no live price; the existing index/watchlist cards can still show explicitly labeled snapshot prices. Demo mode hides real live panels. No additional broker connection, backend or credential storage was added, and strategy calculations remain five-minute snapshots.
+
 ## Why a recommendation may be missing
 
 The shared live panel and CE/PE tab distinguish stale data from market neutrality:

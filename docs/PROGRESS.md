@@ -72,3 +72,10 @@ After each approved module, record its plan scope, status, affected files, relev
 - Added a fictional-configuration login regression suite covering matching/mismatched credentials, local return links, rejected external redirects, expiry, storage failure, cleared password fields and Logout; added it and the three new assets to the existing Actions workflow.
 - All six Node suites passed. A local browser fixture verified the form flow, home deep link, Logout and 390px login/dashboard layout without using the owner's real password.
 - Status: complete and published. [Deployment 44254044485](https://github.com/sevendreamzone1/market-pulse/actions/runs/44254044485) succeeded for commit `1626c17`; public login.html/login.js, the dashboard guard and live-page Logout control were verified. No database, backend, hosting migration or broker-login change was introduced.
+
+## Home-page live market prices - 2026-11-18
+- User-requested frontend extension: added a visible live quote table and connection status/link above home-page analysis, using the existing connected broker tab.
+- Modified `index.html`, `styles.css`, `live-dashboard.mjs` and demo visibility in `app.js`; no broker-token flow, database or backend change was made.
+- Live prices, change from close and IST trade times require live packets, valid prices, recent exchange trades and recent receipts. Initial, future-dated and stale quotes are withheld; disconnect/heartbeat expiry clears the home table and existing cards return to labeled snapshots.
+- Relevant Node suites passed. Browser fixtures verified cross-tab home prices, freshness, disconnect behavior and a 390px mobile layout. Per-tab UI access was initialized for the fixture; this was not a real broker authentication check.
+- Status: implementation and verification complete; publication pending.

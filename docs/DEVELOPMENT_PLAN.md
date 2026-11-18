@@ -65,6 +65,11 @@ Completion evidence: [deployment 44247665180](https://github.com/sevendreamzone1
 - Keep secrets out of source, tests, public snapshots and progress records. Keep index and premium units, timestamps and freshness visible.
 - Documentation-only setup requires skill validation, local-link checks and whitespace checks; it does not justify runtime implementation or a market refresh.
 
+## Home-page live prices - approved frontend extension
+Approval evidence: the user requested "need to show live market datas in home page also" on 2026-11-18. This is a scoped UI extension using the existing broker tab and BroadcastChannel, not approval for a new backend or credential storage.
+
+Added a visible home-page table for subscribed indices, equities and option contracts, with live price, change, trade time, freshness and a connection link. Only live packets with trades within 30 seconds and receipt within five seconds may appear as live. Preserve snapshot fallback in existing cards, disconnect clearing, demo isolation and separate strategy timestamps. Existing regression tests and a browser fixture verified those boundaries and a 390px layout. Status: implementation and checks complete; publication pending.
+
 ## Completion criteria
 A module is complete when the requested behavior is implemented, relevant checks pass, limitations are recorded, and publication is verified if publication was requested. Fixture tests are not evidence of live broker entitlement or investment accuracy.
 

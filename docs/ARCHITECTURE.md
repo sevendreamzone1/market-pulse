@@ -58,6 +58,8 @@ The main app publishes its already-loaded public snapshot through `marketpulse-s
 
 The full strategy catalog still uses completed-candle snapshots. Live monitoring does not imply full indicator recalculation on every tick, a shared public account stream, exchange-fresh Greeks, actual order execution, or fill tracking.
 
+The home-page live-price table is rendered by `live-dashboard.mjs` from the same quote channel. It shows instrument labels, LTP, change from close, exchange trade time and freshness. Quotes must be live updates with a positive finite price, trade age at most 30 seconds and receipt age at most five seconds; initial, future and stale values are withheld. The filtered quotes also drive existing index/watchlist overrides. No broker credential is entered or stored on the home page, and no extra socket or polling pipeline was added.
+
 ## Trust and persistence
 - The live page has a restrictive CSP and no third-party scripts/fonts. Main-page TradingView is a separate trust boundary.
 - Validate broker URLs, binary messages, timestamps, identifiers, and external labels; never render external strings as executable HTML.

@@ -17,6 +17,12 @@
     <header class="topbar"><span>Workspace <span class="slash">/</span> <strong id="view-label">Market overview</strong></span><a class="live-link" href="live.html" target="_blank" rel="noopener noreferrer">● Live API quotes ↗</a><button id="ui-logout" class="ui-logout" type="button">Logout</button><span id="clock"></span></header>
     <section class="page-heading"><div><div class="eyebrow">YOUR MARKET, IN FOCUS</div><h1>A pulse on the market<span>.</span></h1><p>Follow the move. Understand the momentum.</p></div><div class="heading-actions"><span class="market-session" id="session">India market</span><button id="refresh" class="button">↻ &nbsp; Refresh data</button></div></section>
     <div class="data-notice" id="data-notice" role="status">Loading market snapshots…</div>
+    <section id="home-live-market" class="panel home-live" aria-label="Live market prices">
+      <div class="home-live-heading"><div><div class="eyebrow">UPSTOX · LIVE QUOTES</div><h2>Live market prices</h2></div><a class="button" href="live.html" target="_blank" rel="noopener noreferrer">Connect live feed ↗</a></div>
+      <p id="home-live-status" class="home-live-status" role="status" aria-live="polite">Connect the live feed to display current market prices here.</p>
+      <div class="home-live-scroll"><table><thead><tr><th>Instrument</th><th>Live price</th><th>Change vs close</th><th>Trade time · IST</th><th>Status</th></tr></thead><tbody id="home-live-rows"></tbody></table></div>
+      <p class="home-live-note">Connect on the live page and keep that tab open in the same browser. Sign in there if prompted. Prices appear here automatically; five-minute analysis and TradingView charts retain their separate feeds.</p>
+    </section>
     <section id="live-setups" class="live-setups" aria-label="Live CE and PE scenarios"></section>
     <div class="page-tabs" role="tablist" aria-label="Workspace views"><button id="tab-overview" role="tab" aria-controls="overview-panel" aria-selected="true">Market overview</button><button id="tab-options" role="tab" aria-controls="options-panel" aria-selected="false" tabindex="-1">CE / PE analysis <span>02</span></button></div>
     <div id="overview-panel" role="tabpanel" aria-labelledby="tab-overview">

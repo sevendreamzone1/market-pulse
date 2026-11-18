@@ -38,6 +38,7 @@ function tick(){
 }
 function render(pricesOnly=false){
   $('live-setups').hidden=demo;
+  $('home-live-market').hidden=demo;
   if(pricesOnly!==true)renderOptions();
   $('indices').innerHTML=indices.map(index=>{const item=find(index.ticker);const closes=item?.recent_closes?.filter(Number.isFinite)||[];let spark='';if(closes.length>1){const min=Math.min(...closes),range=Math.max(...closes)-min||1;const points=closes.map((v,i)=>`${i/(closes.length-1)*85},${32-(v-min)/range*28}`).join(' ');spark=`<svg viewBox="0 0 85 35" aria-hidden="true"><polyline points="${points}" fill="none" stroke="${item.change_pct>=0?'#91d8ae':'#f19c92'}" stroke-width="1.5"/></svg>`;}return `<div class="index-card"><div class="index-top"><span>${index.name}</span><span>${index.exchange}</span></div><div class="index-price">${money(item?.price)}</div><div class="index-change">${change(item)}</div>${spark}<div class="signal-time">${item?.live?'LIVE · '+dateTime(item.trade_time):item?(demo?'DEMO · ':'')+dateTime(item.candle_end):'Awaiting first snapshot'}${item&&!fresh(item)?' · strategy snapshot stale':''}</div></div>`;}).join('');
   const stocks=universe.filter(stock=>(exchange==='ALL'||stock.exchange===exchange)&&`${stock.name} ${stock.symbol}`.toLowerCase().includes($('search').value.toLowerCase().trim()));
