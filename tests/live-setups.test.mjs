@@ -18,15 +18,19 @@ const get=(e,s=snapshot(),connected=true,now=end)=>e.evaluate(s,connected,now)[0
 let e=ready();let row=get(e);
 assert.equal(row.state,'BUY CE TRIGGERED');assert.equal(row.entry,50);assert.equal(row.stop,45);assert.equal(row.target1,55);assert.equal(row.target2,60);
 assert.equal(row.triggeredAt,end);assert.equal(row.exitDueAt,end+1800000);assert.equal(row.exitAt,undefined);
+assert.equal(row.changed_at,end);
 e.ingest([option(51,52,end+1000),index(102,end+1000)],1,end+1000);
 row=get(e,snapshot(),true,end+1000);assert.equal(row.entry,50,'entry must remain frozen');assert.equal(row.target1,55);
+assert.equal(row.changed_at,end,'ordinary live prices must not reset the recommendation timestamp');
 e.ingest([option(55,56,end+2000),index(103,end+2000)],1,end+2000);
 assert.equal(get(e,snapshot(),true,end+2000).state,'TARGET 1 HIT');
+assert.equal(get(e,snapshot(),true,end+2000).changed_at,end+2000);
 e.ingest([option(44,45,end+3000),index(103,end+3000)],1,end+3000);
 assert.equal(get(e,snapshot(),true,end+3000).state,'SL HIT');
 row=get(e,snapshot(),true,end+3000);assert.equal(row.exitAt,end+3000);assert.equal(row.exitBid,44);assert.equal(row.exitQuoteTime,end+3000);
 e.ingest([option(60,61,end+4000)],1,end+4000);assert.equal(get(e,snapshot(),true,end+4000).state,'SL HIT','SL must latch');
 row=get(e,snapshot(),true,end+4000);assert.equal(row.exitAt,end+3000);assert.equal(row.exitBid,44,'later prices must not change the exit observation');
+assert.equal(row.changed_at,end+3000);assert.equal(row.previous_state,'TARGET 1 HIT');
 e=ready('PE');assert.equal(get(e,snapshot('PE')).state,'BUY PE TRIGGERED');
 e.ingest([index(111,end+1000)],1,end+1000);assert.equal(get(e,snapshot('PE'),true,end+1000).state,'INDEX STOP HIT');
 e=ready();assert.equal(get(e).state,'BUY CE TRIGGERED');
@@ -105,4 +109,21 @@ s=snapshot();s.options[0].candle_end=new Date(later-1).toISOString();s.options[0
 assert.equal(get(e,s,true,later).state,'WATCH CE');assert.equal(e.active.size,0);
 assert.equal(e.armed.get('^NSEI').row.candle_end,s.options[0].candle_end);
 e.clear();assert.equal(e.armed.size,0);
+assert.equal(e.changes.size,0,'disconnect clearing must also remove recommendation change state');
+// Watch ask references change without generating new recommendations.
+e=new LiveSetups();e.ingest([index(101,end),option(49,50,end)],1,end);
+row=get(e);assert.equal(row.state,'WATCH CE');assert.equal(row.changed_at,end);assert.equal(row.previous_state,null);
+e.ingest([index(102,end+1000),option(51,52,end+1000)],1,end+1000);
+row=get(e,snapshot(),true,end+1000);assert.equal(row.entry,52);assert.equal(row.changed_at,end);
+// A newly armed trigger is a meaningful update, even with the same WATCH state.
+const rearm=end+300000;e.ingest([index(102,rearm),option(51,52,rearm)],1,rearm);
+s=snapshot();s.options[0].candle_end=new Date(rearm).toISOString();s.options[0].entry=105;s.options[0].premium.fetched_at=new Date(rearm).toISOString();
+row=get(e,s,true,rearm);assert.equal(row.state,'WATCH CE');assert.equal(row.indexEntry,105);assert.equal(row.changed_at,rearm);assert.equal(row.previous_state,'WATCH CE');
+// Snapshot publication times and heartbeat redraws do not create updates.
+e=new LiveSetups();s=snapshot();s.options[0].status=s.options[0].method.status='no_trade';s.options[0].reason='Mixed checks';
+row=get(e,s,false,end);assert.equal(row.changed_at,end);
+s.options[0].candle_end=new Date(end+1000).toISOString();
+assert.equal(get(e,s,false,end+1000).changed_at,end);
+s.options[0].method.checks[0].ce_pass=false;
+assert.equal(get(e,s,false,end+2000).changed_at,end+2000);
 console.log('Live setups passed: CE/PE, completed candles, no initial/partial/gapped entry, fresh depth, anti-chase, frozen risk, bid exits, latched targets/SL, time and confluence exits.');

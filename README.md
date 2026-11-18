@@ -55,6 +55,8 @@ Only fresh live-update packets are shown as live. Trades older than 30 seconds, 
 
 ## Why a recommendation may be missing
 
+Home and live pages show **Recommendation updates** and a **Status changed IST** table column automatically. They highlight current CE/PE watches, confirmed entries, targets, exits and eligibility changes, using the configured rule-based method. Each index retains only its latest change time and previous status in memory. Ordinary price ticks and repeated snapshots do not create a new recommendation. Initial status observations are labeled separately; disconnect clears live change state. Keep the live tab connected and open. This is not an ongoing human/ChatGPT monitoring service, background push notifications or persistent signal history.
+
 The shared live panel and CE/PE tab distinguish stale data from market neutrality:
 
 - **WAIT FOR ANALYSIS:** no strategy snapshot has loaded yet.

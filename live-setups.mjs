@@ -16,7 +16,16 @@ function session(now){
 // without a >30s data gap. First partial candles and reconnect gaps cannot confirm entry.
 export class LiveSetups {
   constructor(){this.clear();}
-  clear(){this.quotes=new Map();this.bars=new Map();this.closed=new Map();this.active=new Map();this.armed=new Map();this.completed=new Map();}
+  clear(){this.quotes=new Map();this.bars=new Map();this.closed=new Map();this.active=new Map();this.armed=new Map();this.completed=new Map();this.changes=new Map();}
+  trackChange(row,now){
+    // Ignore heartbeat times, source refresh times and changing quote references.
+    // Pinned index levels and actual entry/exit observations are meaningful changes.
+    const signature=JSON.stringify([row.state,row.side,row.contract,row.monitor?null:row.reason,row.indexEntry,row.indexStop,row.indexTarget1,row.indexTarget2,row.triggeredAt,row.exitAt,row.exitBid,row.method?.checks]);
+    const previous=this.changes.get(row.ticker);
+    const change=previous?.signature===signature?previous:{signature,at:now,from:previous?.state||null,state:row.state};
+    this.changes.set(row.ticker,change);
+    return {...row,changed_at:change.at,previous_state:change.from};
+  }
   ingest(quotes,type,now=Date.now()){
     for(const quote of quotes){
       if(!positive(quote.ltp)||quoteStatus(quote,now)!=='Fresh trade')continue;
@@ -115,6 +124,6 @@ export class LiveSetups {
       this.active.set(ticker,state);
       this.armed.delete(ticker);
       return {...base,...state,state:'BUY '+row.side+' TRIGGERED',reason:'Completed live candle confirmed the breakout with fresh option depth. Indicative ask reference; verify your actual fill.',monitor:true};
-    });
+    }).map(row=>this.trackChange(row,now));
   }
 }
