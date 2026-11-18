@@ -19,7 +19,7 @@
 - Prefer focused patches over whole-file rewrites. Reuse existing implementations and keep responses concise.
 
 ## Workflow
-- Application implementation requires explicit user approval of [the development plan](docs/DEVELOPMENT_PLAN.md). Module 1 and the user's clarified Module 5 browser-only login are approved; other proposed modules remain unapproved.
+- Application implementation requires explicit user approval of [the development plan](docs/DEVELOPMENT_PLAN.md). Module 1, the user's clarified Module 5 browser-only login, and MP-PLAN-002 revision 1 (single trend-breakout method) are approved; other proposed modules remain unapproved.
 - Before application edits, verify the approved plan version and scope. Record the user's approval evidence in the plan; never mark approval based on silence or an agent's decision.
 - For complex tasks, make a short plan with modules and acceptance checks before editing. Plan approval covers the listed modules; do not request approval again for routine steps within that scope.
 - Complete and verify each module, then report meaningful progress.
@@ -32,6 +32,7 @@
 - Strategy categories use completed five-minute candles; live ticks confirm and monitor scenarios. Do not describe them as full indicator recalculation on every tick.
 - Keep index points separate from option-premium rupees. Preserve freshness, expiry, spread/depth, session, and no-chase gates.
 - Category agreement is not accuracy or win probability. Do not claim a validated edge or 90% accuracy without supporting research.
+- Under approved MP-PLAN-002, CE/PE direction comes only from `trend-breakout-v1`; category confluence is optional diagnostics, not an entry gate. Preserve this approved replacement when following older skill wording about category confluence. Stock EMA/RSI cards retain their separate baseline logic.
 - Preserve NO TRADE, unavailable-data states, explicit fictional demo isolation, and quote clearing on disconnect.
 - GitHub Pages serves static files. It cannot host a persistent Python service, shared authenticated stream, or database server.
 

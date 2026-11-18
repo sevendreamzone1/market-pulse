@@ -12,7 +12,8 @@ NOW = datetime(2026, 11, 17, 5, 0, tzinfo=timezone.utc)
 class OptionsTests(unittest.TestCase):
     def item(self, signal='Bullish'):
         return dict(ticker='^NSEI', recent_closes=list(range(100, 130)), signal=signal,
-                    strategy_report={'consensus':{'signal':signal,'reason':'Fixture category agreement'}},
+                    entry_method={'id':'trend-breakout-v1','status':'conditional' if signal in ('Bullish','Bearish') else 'no_trade','side':'CE' if signal=='Bullish' else 'PE','entry':129 if signal=='Bullish' else 110,'stop':125 if signal=='Bullish' else 129,'target1':133 if signal=='Bullish' else 91,'target2':137 if signal=='Bullish' else 72,'reason':'Fixture trend breakout','checks':[{'ce_pass':signal=='Bullish','pe_pass':signal=='Bearish'}]*3},
+                    strategy_report={'consensus':{'signal':'Neutral','reason':'Diagnostics do not vote'}},
                     candle_end='2026-11-17T04:55:00+00:00', reason='Fixture alignment')
 
     def quote(self):
@@ -30,9 +31,11 @@ class OptionsTests(unittest.TestCase):
         self.assertEqual((put['side'],put['entry'],put['stop'],put['target1'],put['target2']), ('PE',110,129,91,72))
 
     def test_neutral_flat_and_bad_data_do_not_create_levels(self):
-        for item in (self.item('Neutral'), {**self.item(), 'recent_closes':[100]*30},
-                     {**self.item(), 'recent_closes':[float('nan')]*30}):
-            plan = underlying_setup(item)
+        missing=self.item();missing.pop('entry_method')
+        invalid=self.item();invalid['entry_method']['stop']=float('nan')
+        crossed=self.item();crossed['entry_method']['stop']=9999
+        for item in (self.item('Neutral'),missing,invalid,crossed):
+            plan=underlying_setup(item)
             self.assertNotIn('entry',plan)
             self.assertIn(plan['status'],('unavailable','no_trade'))
 

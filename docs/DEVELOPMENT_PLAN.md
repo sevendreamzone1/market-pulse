@@ -5,7 +5,7 @@
 - Prepared: 2026-11-18, Asia/Colombo.
 - Status: **MODULE 1 AND MODULE 5 BROWSER-ONLY LOGIN COMPLETE AND PUBLISHED**. Modules 2 through 4 and server-side hosting changes remain unapproved.
 - Approval evidence: user replied "approved" on 2026-11-18 to the request to approve Module 1's focused repair and publication.
-- Authorized now: Module 1 maintenance and the clarified Module 5 browser-only login, their tests and existing Pages publication, plus agent documentation maintenance.
+- Authorized now: Module 1 maintenance, the clarified Module 5 browser-only login, MP-PLAN-002 revision 1's trend-breakout replacement below, their tests and existing Pages publication, plus agent documentation maintenance.
 - Outside this approval: unrelated runtime refactors, dependency additions, infrastructure changes, and implementation of Modules 2 through 4.
 
 The application already exists. This plan governs subsequent development; it does not describe existing features as work newly completed during setup. Update status and record the user's approved scope only after explicit approval. Approval of selected modules does not approve the entire backlog.
@@ -97,3 +97,34 @@ Implement a matching login screen, fixed owner username/password digest, per-tab
 
 ### Shared login extension - approved by current user request
 The user requested one login for home and the live feed. Replace the initial per-tab marker with an eight-hour browser-wide marker scoped to this site path, synchronize login/logout using storage events, and preserve expiry and safe local returns. Share only the UI marker; never persist the site password, Upstox token or authorized socket URL. Upstox API authorization remains separate from site sign-in. Cross-tab tests and a browser fixture verified a new live tab skips the second site prompt and logout from live signs out both pages. Status: complete and published. [Deployment 44286718036](https://github.com/sevendreamzone1/market-pulse/actions/runs/44286718036) succeeded for commit `54ecdef`; the public shared-login script and home/live page copy were verified.
+
+
+## Approved replacement signal engine - MP-PLAN-002, revision 1
+Status: approved for implementation and existing GitHub Pages publication. Approval evidence: after reviewing MP-PLAN-002, the user requested "can you figure out and configure code accordingly". This approves the concrete replacement method and its verification. Implementation, regression suites and fictional browser verification are complete; GitHub publication is pending.
+
+Request evidence: the user asked whether the supplied strategy catalog drives recommendations, and requested replacing it with a method selected by the architect. This replaces decision authority, rather than relaxing the existing catalog's agreement threshold. Root AGENTS.md requires review/approval of the concrete plan before this material strategy change.
+
+### Selected method: five-minute trend breakout
+This is a proposed, unvalidated rule set for research scenarios, not a claim of superior returns or exact executable prices. Moving-average trend filters and range breakout levels are chosen for explicit rules and reuse of available candle data. The numeric parameters below are design choices requiring evaluation; educational sources do not validate this combination.
+
+- Scope: existing NIFTY, BANK NIFTY and SENSEX CE/PE scenarios; completed five-minute provider candles. Keep the catalog as optional diagnostics, but remove its category votes/60% agreement as decision authority. Show one named method and its passed/failed checks consistently across dashboard, options tab and live table. Do not alter ordinary equity quote transport or login.
+- Data: require at least 60 valid, consecutive in-session OHLC candles for indicator calculations; history may span trading sessions, with no missing five-minute interval inside an observed regular session. Range and recent swing levels must use today's session bars; require 20 completed current-session bars before arming a breakout. This intentionally delays earliest setups until about 10:55 IST. EMA9/21 and ATR14 use completed available history; do not invent index volume/VWAP.
+- CE watch: EMA9 > EMA21, latest EMA21 > its previous value, latest close > EMA9. Range trigger is the highest high of the latest 20 completed current-session candles + 0.1 ATR14.
+- PE watch: EMA9 < EMA21, latest EMA21 < its previous value, latest close < EMA9. Range trigger is the lowest low of those 20 candles - 0.1 ATR14. Mixed filters mean NO TRADE, with a failed-check explanation.
+- Confirmation: a later, fully observed five-minute live index candle must close above the CE trigger or below the PE trigger. Freeze an armed trigger while waiting for that next complete candle; replacing a snapshot must not silently move the pending trigger. Expire the arm after ten minutes from its source candle, or invalidate on a fresh opposite/neutral method decision, index stop breach, disconnect or missed/gapped confirmation. A new eligible snapshot may then arm a new watch; expired or partial observations cannot trigger retroactively.
+- Underlying risk: CE stop is max(lowest low of latest five current-session candles, trigger - 1.5 ATR14); PE stop is min(highest high of those candles, trigger + 1.5 ATR14). Require strictly positive risk. Underlying references use index points; show 1R/2R reference levels separately from option prices.
+- Contract and premium risk: retain existing future-expiry ATM selection, actual tick/lot units, option ATR14 from 30 completed option candles, fresh bid/ask, positive traded volume, spread <=5% and depth >=one lot. Retain the existing premium stop calculation and 1R/2R targets frozen at confirmation. Do not enter beyond the armed index T1 or option reference T1; missing/invalid premium risk means no entry.
+- Exits: observed option bid at SL/T2, index stop breach, fresh method-direction invalidation, or 30 minutes from trigger / 15:15 IST, whichever comes first. T1 is a partial-exit observation only. Keep the existing observed timestamps/bid capture and no-fill labels.
+- Availability: keep 09:30-14:45 IST weekday entry limits, snapshot age <=10 minutes, option metadata age <=5 minutes, trade age <=30 seconds and receipt age <=5 seconds. The 20-current-session-bar requirement further restricts actual readiness. No holiday-calendar implementation is included.
+
+### Module workflow and acceptance
+1. Python decision module: reuse EMA/ATR helpers; add versioned method output, explicit gates, pinned trigger inputs and index risk levels. Keep legacy diagnostics separate. Fixture-test CE/PE symmetry, flat/mixed trends, insufficient/missing/invalid candles, session boundaries and no future-bar use.
+2. Live confirmation and shared presentation: consume the named method instead of catalog agreement; pin armed trigger identity; preserve all liquidity/freshness/partial-candle and no-chase checks. Fixture-test snapshot replacement during confirmation, arm expiry, opposite decision invalidation, fixed entry/exit levels, exit latching and rejection of incompatible old snapshots. Update existing Node and Python consumers/tests together.
+3. Verify and publish: run affected suites, check desktop/mobile with fictional quotes, update requirements/architecture/progress and publish using existing GitHub Actions. Report actual deployment outcome. Do not claim owner-session verification from fixtures.
+
+### Devil's advocate review
+Decision: use one trend-following breakout method instead of mixing trend, reversal and event votes. Strongest unproven assumption: this method has a useful net edge on these index options. Failure modes: sideways false breakouts, opening gaps/late continuation, premium decay/spreads, too few signals, delayed GitHub snapshots and moved triggers. Mitigations in scope: explicit method gates, pinned arm identity, existing stop/liquidity/no-chase checks and honest NO TRADE/data-blocker states. Simpler alternative: retain current engine and merely explain its blockers; this does not satisfy the requested change in decision authority. Historical out-of-sample and forward evidence are still needed before claiming effectiveness; Modules 2/3 remain separately unapproved.
+
+No new host, database, dependencies, credential storage, automatic orders or persistent signal history. This change cannot make GitHub schedules continuous or guarantee entries on every session.
+
+References for concepts, not validation of these parameters: https://zerodha.com/varsity/chapter/moving-averages/ and https://zerodha.com/varsity/chapter/support-resistance/ .

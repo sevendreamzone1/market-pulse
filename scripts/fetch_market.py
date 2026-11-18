@@ -9,6 +9,7 @@ from signals import analyze
 from providers import select_provider, provider_configuration
 from options_analysis import build_options
 from strategies import evaluate
+from trade_method import evaluate_method
 
 ROOT = Path(__file__).resolve().parents[1]
 TICKERS = ['RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS',
@@ -38,7 +39,8 @@ def build_item(ticker, candles, daily, now):
     change = (closes[-1] / prev_close - 1) * 100 if prev_close and math.isfinite(prev_close) else None
     return dict(ticker=ticker, price=closes[-1], change_pct=change,
                 candle_end=last_end.isoformat(), recent_closes=closes[-30:],
-                strategy_report=evaluate(candles), **indicators)
+                strategy_report=evaluate(candles),
+                **({'entry_method':evaluate_method(candles)} if ticker in ('^NSEI','^NSEBANK','^BSESN') else {}), **indicators)
 
 
 def main():

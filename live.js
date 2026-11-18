@@ -79,6 +79,7 @@ async function loadInstruments(){
     const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
     for(const row of data.options||[]){const premium=row.premium;if(premium?.instrument_key&&premium.expiry>=today)desired.set(premium.instrument_key,premium.trading_symbol||premium.instrument_key);}
     for(const state of analysis.active.values())if(!state.exit)desired.set(state.key,state.contract);
+    for(const arm of analysis.armed.values()){const p=arm.row.premium;if(p?.instrument_key)desired.set(p.instrument_key,p.trading_symbol||p.instrument_key);}
     const added=[...desired.keys()].filter(key=>!instruments.has(key)),removed=[...instruments.keys()].filter(key=>!desired.has(key));
     for(const key of removed){instruments.delete(key);quotes.delete(key);analysis.quotes.delete(key);}
     for(const [key,label] of desired)instruments.set(key,label);

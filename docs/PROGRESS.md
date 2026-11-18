@@ -95,3 +95,21 @@ After each approved module, record its plan scope, status, affected files, relev
 - Relevant scenario, shared-dashboard and live-viewer regression suites and JavaScript syntax checks passed. Added coverage for entry/exit timestamps, fixed bid observations, absent/stale/crossed exit quotes, watch/no-trade presentation and safe table labels.
 - Hidden-browser fictional fixture verified IST entry/exit values, 390px page fit, horizontal table scrolling and focus/scroll retention during redraws. No owner broker credentials were used.
 - Status: complete and published. [Deployment 44293417590](https://github.com/sevendreamzone1/market-pulse/actions/runs/44293417590) succeeded for commit `96302b0`; the public table, exit metadata code and stylesheet were verified.
+
+
+## Replacement strategy request - proposal prepared
+- Confirmed current CE/PE direction is determined by category voting across the user's supplied catalog, not a single independently validated strategy.
+- Prepared MP-PLAN-002 revision 1 in DEVELOPMENT_PLAN.md: one named five-minute trend breakout method, explicit EMA/ATR/range rules, pinned pending triggers, existing liquidity/freshness/risk checks, and consistent dashboard/live explanations.
+- Backend and devil's advocate skills used to review producer/consumer boundaries, conflicting vote types, snapshot delays and unsupported accuracy claims.
+- Approval received: after reviewing MP-PLAN-002, the user requested "can you figure out and configure code accordingly". The concrete replacement method, tests and existing Pages publication are authorized. Implementation and verification follow below.
+
+
+## MP-PLAN-002 - single trend-breakout method implemented
+- Approval evidence: the user's "can you figure out and configure code accordingly" follows the explicit MP-PLAN-002 review request. No new approval was inferred from silence.
+- Added `scripts/trade_method.py` using existing EMA/ATR helpers, completed regular-session OHLC validation, 60-bar history, 20-bar current-session warm-up, EMA9/21/slope/close checks, buffered range triggers and five-bar/ATR index risk. Python option scenarios consume only this versioned method; catalog votes remain optional diagnostics. Ordinary stock-card EMA/RSI behavior is unchanged.
+- Added pinned pending watches to `live-setups.mjs`; newer snapshots cannot move an armed trigger. Future complete candles alone may confirm; missing/gapped candles, arm expiry, direction/contract changes and disconnect prevent retroactive entries. Existing depth, freshness, expiry, no-chase, bid exit and time rules remain. An unavailable model pauses active monitoring instead of inventing a direction-loss exit.
+- Updated shared home/live method checks and options explanations, preserved the entry/exit summary, and blocked older/incompatible decision models. Pending/active option contracts stay subscribed while needed.
+- All 40 Python tests and all six Node suites passed, plus relevant JavaScript syntax and whitespace checks. Regression coverage includes CE/PE symmetry, current-session history, invalid/missing candles, unfinished-candle exclusion, legacy-model rejection, pinned trigger replacement, neutral/opposite invalidation, expiry and no retroactive entry.
+- Browser fixture exercised the Python method output through live CE confirmation and observed SL, home-page method/check presentation, and a 390px layout. No owner credentials were used. Code-review and devil's advocate checks covered model boundaries, stable risk levels, delayed snapshots and unvalidated-edge claims.
+- Limits: earliest watch is 10:55 IST; actual confirmation requires a later full candle, and opportunities are not guaranteed. GitHub schedule latency, real owner-stream operation, actual fills and profitability remain outside fixture evidence. No database, persistent paper ledger, extra dependency, backend service or order execution was added.
+- Status: code verified; GitHub publication pending.

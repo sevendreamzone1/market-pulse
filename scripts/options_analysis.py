@@ -4,33 +4,30 @@ from datetime import datetime, timezone
 from decimal import Decimal, ROUND_CEILING, ROUND_FLOOR
 from zoneinfo import ZoneInfo
 from strategies import atr_values
+from trade_method import METHOD_ID
 
 INDEX_TICKERS = ('^NSEI', '^NSEBANK', '^BSESN')
 
 
 def underlying_setup(item):
-    closes = item.get('recent_closes', [])
-    if len(closes) < 20 or not all(isinstance(x, (float, int)) and math.isfinite(x) and x > 0 for x in closes):
-        return dict(status='unavailable', reason='At least 20 valid completed closes are needed.')
-    report=item.get('strategy_report', {})
-    signal = report.get('consensus', {}).get('signal')
-    if signal not in ('Bullish', 'Bearish'):
-        return dict(status='no_trade', reason=report.get('consensus', {}).get('reason', 'Strategy evaluation unavailable; no recommendation from the legacy EMA/RSI signal.'))
-    call = signal == 'Bullish'
-    entry = report.get('swing_high', max(closes[-20:])) if call else report.get('swing_low', min(closes[-20:]))
-    stop = min(closes[-5:]) if call else max(closes[-5:])
-    atr=report.get('atr14')
-    if atr and atr>0:
-        stop=max(stop,entry-1.5*atr) if call else min(stop,entry+1.5*atr)
-    risk = abs(entry - stop)
-    direction = 1 if call else -1
-    if risk <= 0 or entry + direction * 2 * risk <= 0:
-        return dict(status='no_trade', reason='The recent price range cannot define a usable stop and targets.')
-    return dict(status='conditional', side='CE' if call else 'PE',
-                reason=report['consensus']['reason'], entry=round(entry, 2), stop=round(stop, 2),
-                target1=round(entry + direction * risk, 2), target2=round(entry + direction * 2 * risk, 2),
-                basis='underlying_index_points', confirmation='above' if call else 'below',
-                candle_end=item.get('candle_end'))
+    method=item.get('entry_method') or {}
+    if method.get('id') != METHOD_ID:
+        return dict(status='unavailable', reason='The trend-breakout model is missing or incompatible; refresh analysis.')
+    if method.get('status') != 'conditional' or method.get('side') not in ('CE','PE'):
+        return dict(status='no_trade' if method.get('status')=='no_trade' else 'unavailable',
+                    reason=method.get('reason','Trend-breakout checks are unavailable.'))
+    checks=method.get('checks',[])
+    if len(checks)!=3 or not all(check.get('ce_pass' if method['side']=='CE' else 'pe_pass') is True for check in checks):
+        return dict(status='unavailable',reason='All three trend-breakout checks must confirm the selected direction.')
+    levels=[method.get(k) for k in ('entry','stop','target1','target2')]
+    if not all(isinstance(v,(int,float)) and math.isfinite(v) and v>0 for v in levels):
+        return dict(status='unavailable',reason='Invalid trend-breakout risk levels.')
+    entry,stop,t1,t2=levels
+    if not (stop<entry<t1<t2 if method['side']=='CE' else stop>entry>t1>t2):
+        return dict(status='unavailable',reason='Invalid trend-breakout risk direction.')
+    return dict(status='conditional',side=method['side'],entry=entry,stop=stop,target1=t1,target2=t2,
+                reason=method['reason'],basis='underlying_index_points',
+                confirmation='above' if method['side']=='CE' else 'below',candle_end=item.get('candle_end'))
 
 
 def premium_scenario(chain, contracts, setup, now, risk_bars=None):
@@ -118,9 +115,9 @@ def build_options(items, provider, now):
         if item.get('ticker') not in INDEX_TICKERS:
             continue
         setup = underlying_setup(item)
-        setup.update(ticker=item['ticker'], source=item.get('source'),
+        setup.update(ticker=item['ticker'], source=item.get('source'), method=item.get('entry_method',{}),
                      candle_end=item.get('candle_end'), strategy_report=item.get('strategy_report', {}),
-                     premium={'status':'unavailable', 'reason':'No directional confluence or usable option-chain quote.'})
+                     premium={'status':'unavailable', 'reason':'No valid trend-breakout watch or usable option-chain quote.'})
         context=options_context([])
         if hasattr(provider, 'option_chain'):
             try:
