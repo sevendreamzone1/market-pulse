@@ -94,4 +94,4 @@ After each approved module, record its plan scope, status, affected files, relev
 - Added latched, session-only exit observations in `live-setups.mjs`. Missing/stale/crossed option quotes cannot supply an exit price, and subsequent ticks cannot overwrite the captured exit. No actual fills or historical ledger are tracked.
 - Relevant scenario, shared-dashboard and live-viewer regression suites and JavaScript syntax checks passed. Added coverage for entry/exit timestamps, fixed bid observations, absent/stale/crossed exit quotes, watch/no-trade presentation and safe table labels.
 - Hidden-browser fictional fixture verified IST entry/exit values, 390px page fit, horizontal table scrolling and focus/scroll retention during redraws. No owner broker credentials were used.
-- Status: verified locally; GitHub publication pending.
+- Status: complete and published. [Deployment 44293417590](https://github.com/sevendreamzone1/market-pulse/actions/runs/44293417590) succeeded for commit `96302b0`; the public table, exit metadata code and stylesheet were verified.
