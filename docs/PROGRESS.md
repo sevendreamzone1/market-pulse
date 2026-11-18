@@ -78,4 +78,4 @@ After each approved module, record its plan scope, status, affected files, relev
 - Modified `index.html`, `styles.css`, `live-dashboard.mjs` and demo visibility in `app.js`; no broker-token flow, database or backend change was made.
 - Live prices, change from close and IST trade times require live packets, valid prices, recent exchange trades and recent receipts. Initial, future-dated and stale quotes are withheld; disconnect/heartbeat expiry clears the home table and existing cards return to labeled snapshots.
 - Relevant Node suites passed. Browser fixtures verified cross-tab home prices, freshness, disconnect behavior and a 390px mobile layout. Per-tab UI access was initialized for the fixture; this was not a real broker authentication check.
-- Status: implementation and verification complete; publication pending.
+- Status: complete and published. [Deployment 44266239693](https://github.com/sevendreamzone1/market-pulse/actions/runs/44266239693) succeeded for commit `f0f7832`; public index.html, quote renderer and responsive styles were verified. Real broker session availability remains dependent on the user connecting the live tab.
