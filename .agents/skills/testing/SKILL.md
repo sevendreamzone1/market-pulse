@@ -13,6 +13,7 @@ Select checks by the changed behavior. Use the installed project environment; do
 | Provider/API adapter and pipeline | `tests/test_providers.py`, `tests/test_pipeline.py` |
 | Strategy catalog and options | `tests/test_strategies.py`, `tests/test_options.py` |
 | Main dashboard | `node tests/dashboard.test.cjs` |
+| Browser-only login UI | `node tests/login.test.cjs` |
 | Binary schema, URL/freshness checks | `node tests/live-feed.test.mjs` |
 | Authorization and socket lifecycle | `node tests/live-viewer.test.mjs` |
 | Live scenarios and exits | `node tests/live-setups.test.mjs` |

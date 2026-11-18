@@ -39,6 +39,7 @@ The tracked `data/market.json` is a seed; deployed market data can differ becaus
 ## Browser modules
 | Module | Responsibility |
 | --- | --- |
+| `login.html`, `login.css`, `login.js` | User-requested fixed-credential UI gate, local redirect, eight-hour per-tab access marker, Logout; not private hosting |
 | `index.html`, `styles.css`, `app.js` | Main tabs, watchlist, TradingView embedding, snapshot analysis, labeled live price overrides |
 | `live.html`, `live.css`, `live.js` | Separate credential entry, authorization, WebSocket lifecycle, subscription updates and quote display |
 | `live-feed.mjs` | Bounds-checked Protobuf LTPC/full decoding, socket URL validation, quote freshness |
@@ -61,6 +62,7 @@ The full strategy catalog still uses completed-candle snapshots. Live monitoring
 - The live page has a restrictive CSP and no third-party scripts/fonts. Main-page TradingView is a separate trust boundary.
 - Validate broker URLs, binary messages, timestamps, identifiers, and external labels; never render external strings as executable HTML.
 - Do not persist browser credentials or live scenario state. A disconnect ends session monitoring.
+- The approved convenience login compares a static username/password digest in the browser. Only an expiring UI access marker is kept in sessionStorage; entered passwords and Upstox credentials are not stored. Both entry pages load the guard before application scripts. This is bypassable and does not protect public assets or JSON.
 - Tests under `tests/` use fixtures/mocks. Local `.qa/` helpers are ignored conveniences, not tracked infrastructure or required deployment tools.
 
 ## References

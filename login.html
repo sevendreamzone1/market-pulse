@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <meta name="referrer" content="no-referrer"><meta name="theme-color" content="#101617">
+  <title>Sign in · Market Pulse</title><link rel="icon" href="favicon.svg">
+  <link rel="stylesheet" href="login.css"><script src="login.js"></script>
+</head>
+<body class="login-page">
+  <main class="login-card">
+    <div class="login-brand">ϟ &nbsp; market<span>pulse</span></div>
+    <p class="login-eyebrow">YOUR MARKET WORKSPACE</p>
+    <h1>Welcome back<span>.</span></h1>
+    <p class="login-intro">Sign in to open your dashboard.</p>
+    <form id="login-form">
+      <label for="login-username">Username</label>
+      <input id="login-username" name="username" type="email" autocomplete="username" spellcheck="false" autocapitalize="off" required autofocus>
+      <label for="login-password">Password</label>
+      <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+      <button id="login-submit" type="submit">Sign in →</button>
+      <p id="login-status" role="status" aria-live="polite"></p>
+    </form>
+    <p class="login-note">Browser-only sign-in for convenience. This does not make the publicly hosted site or its data private. Sessions last up to eight hours in this tab.</p>
+    <noscript><p>Enable JavaScript to use this sign-in page.</p></noscript>
+  </main>
+</body>
+</html>

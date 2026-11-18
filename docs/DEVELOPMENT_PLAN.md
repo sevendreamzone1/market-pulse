@@ -3,9 +3,9 @@
 ## Approval record
 - Plan ID: `MP-PLAN-001`, revision 1.
 - Prepared: 2026-11-18, Asia/Colombo.
-- Status: **MODULE 1 FOCUSED REPAIR COMPLETE AND PUBLISHED**; other proposed modules await approval.
+- Status: **MODULE 1 COMPLETE; MODULE 5 BROWSER-ONLY LOGIN APPROVED**. Modules 2 through 4 and server-side hosting changes remain unapproved.
 - Approval evidence: user replied "approved" on 2026-11-18 to the request to approve Module 1's focused repair and publication.
-- Authorized now: the focused Module 1 scope below, its tests and publication, plus agent documentation maintenance.
+- Authorized now: Module 1 maintenance and the clarified Module 5 browser-only login, their tests and existing Pages publication, plus agent documentation maintenance.
 - Outside this approval: unrelated runtime refactors, dependency additions, infrastructure changes, and implementation of Modules 2 through 4.
 
 The application already exists. This plan governs subsequent development; it does not describe existing features as work newly completed during setup. Update status and record the user's approved scope only after explicit approval. Approval of selected modules does not approve the entire backlog.
@@ -68,7 +68,7 @@ Completion evidence: [deployment 44247665180](https://github.com/sevendreamzone1
 ## Completion criteria
 A module is complete when the requested behavior is implemented, relevant checks pass, limitations are recorded, and publication is verified if publication was requested. Fixture tests are not evidence of live broker entitlement or investment accuracy.
 
-## Module 5 - private owner login proposal, awaiting approval
+## Module 5 - original private login proposal, superseded
 Requested outcome: a login page that prevents unauthenticated public access. A JavaScript username/password check on the existing public GitHub Pages site cannot enforce that outcome; visitors can inspect or bypass it and directly fetch the public market JSON.
 
 Proposed minimal architecture:
@@ -81,3 +81,8 @@ Proposed minimal architecture:
 Approval needed: replacing public Pages delivery with authenticated hosting and the chosen hosting destination. The previous Module 1 approval does not cover this architecture change. GitHub Enterprise Cloud organization private Pages is a separate access-control option using GitHub identity, not a custom hardcoded owner password.
 
 No login implementation, credential storage, hosting migration, repository-visibility change or unpublishing has been performed under this proposal. Keep credential values out of planning/progress documents.
+
+### Approved replacement: browser-only login
+The user clarified: "a page where credentials enter if matches display home page ... no database ... hard coded login." This authorizes the narrower UI implementation and existing GitHub Pages publication; it does not authorize a hosting migration or establish private access.
+
+Implement a matching login screen, fixed owner username/password digest, per-tab session marker, home/live-page redirects and Logout. Never store the entered password or broker credentials. Preserve safe local return destinations and existing live-feed isolation. Test wrong/correct credentials with fictional configuration, redirect safety, session expiry, storage failure and logout. Clearly state that direct files/JSON remain public and the UI gate is bypassable. Status: implementation and automated checks complete; browser verification and publication pending.

@@ -8,6 +8,12 @@ Upstox is the preferred market-data API. The repository is configured with `MARK
 
 Includes TradingView charts, an eight-company watchlist, NIFTY 50 / BANK NIFTY / SENSEX snapshots, exchange and signal filters, and EMA 9 / EMA 21 / Wilder RSI 14 observations. Demo mode is explicitly fictional and opt-in. No fake prices are shown as market data.
 
+## Browser-only sign-in
+
+Opening the dashboard or live page redirects to `login.html` until the configured owner credentials match. Successful sign-in returns to the home page or an allowed local return destination; Logout removes the per-tab marker. The session lasts up to eight hours and is separate for each browser tab. No database or backend was added. The fixed username and password digest are configured in `login.js`; entered passwords and broker tokens are never stored by this gate.
+
+This is the user's requested convenience UI gate, **not private hosting or server-side authentication**. The check and session flag can be bypassed, and direct assets/market JSON remain publicly accessible. Do not reuse an important account password for this publicly inspectable configuration. The Upstox token/one-time URL flow remains separate.
+
 ## Personal live API quotes
 
 Open [Live API quotes](https://sevendreamzone1.github.io/market-pulse/live.html), or select **Live API quotes** in the dashboard header. This separate page connects from the browser directly to Upstox V3 WebSocket in full mode. It shows last price, change from previous close, exchange trade time, and freshness. It includes the three indices, available watchlist instrument keys, and current option-contract keys from the published snapshot. It confirms snapshot-based CE/PE scenarios with live index candles and option depth, then monitors targets and stops. Full strategy calculations remain completed-candle snapshots.
@@ -33,7 +39,7 @@ The dependency-free decoder handles LTPC plus full-feed index and option depth f
 
 ## Live CE / PE scenarios across the app
 
-The live page and a shared panel above both dashboard tabs show NIFTY 50, BANK NIFTY and SENSEX scenarios. Connect once on `live.html` and keep it open in the same browser and origin. An in-memory BroadcastChannel shares only quotes and scenario outputs, never the access token or socket URL. Index cards and watchlist prices use fresh broker quotes when available, explicitly labeled live; technical indicators retain their own candle timestamps. After five seconds without the live tab heartbeat, the dashboard clears live scenarios and falls back to labeled snapshot prices. No browser storage is used.
+The live page and a shared panel above both dashboard tabs show NIFTY 50, BANK NIFTY and SENSEX scenarios. Connect once on `live.html` and keep it open in the same browser and origin. An in-memory BroadcastChannel shares only quotes and scenario outputs, never the access token or socket URL. Index cards and watchlist prices use fresh broker quotes when available, explicitly labeled live; technical indicators retain their own candle timestamps. After five seconds without the live tab heartbeat, the dashboard clears live scenarios and falls back to labeled snapshot prices. Broker credentials and live scenario state are not persisted. The separate convenience login stores only a per-tab UI access marker.
 
 A buy candidate requires all of the following: a directional full-strategy snapshot no older than ten minutes; a matching future-expiry contract with option ATR/risk metadata retrieved within five minutes; fresh live index and option trades within 30 seconds and packets within five seconds; uncrossed bid/ask spread <=5%; traded volume and depth >=one lot; and a newly completed five-minute candle beyond the underlying trigger. The live candle must be observed from its first ten seconds with no sample gap over 30 seconds. Initial snapshots, partial candles and reconnect gaps never confirm an entry. Entries are restricted to 09:30?14:45 IST weekdays; exchange holidays are not independently checked. Skip moves that have already passed either the original index or premium T1.
 
@@ -164,6 +170,7 @@ python -m venv .venv
 python -m unittest discover -s tests -v
 node --check app.js
 node tests/dashboard.test.cjs
+node tests/login.test.cjs
 node tests/live-feed.test.mjs
 node tests/live-viewer.test.mjs
 node tests/live-setups.test.mjs

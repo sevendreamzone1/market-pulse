@@ -4,6 +4,7 @@
 Market Pulse is a personal NSE/BSE research dashboard hosted on GitHub Pages. It combines TradingView charts, scheduled market-data analysis, and an optional personal Upstox browser stream. It does not manage broker orders or fills.
 
 ## Functional requirements
+- Provide the user-requested fixed-credential login screen, home/live redirects and Logout without a database. Describe it as a browser-only convenience gate; it cannot prevent public access to Pages files or market JSON.
 - Show eight watchlist equities plus NIFTY 50, BANK NIFTY, and SENSEX with provider and time context.
 - Keep market overview and CE/PE analysis views available, with responsive layouts and explicit demo mode.
 - Fetch completed five-minute candles through the configured provider: Upstox when its secret exists in auto mode, otherwise Yahoo. Invalid configured Upstox authentication must not silently fall back.

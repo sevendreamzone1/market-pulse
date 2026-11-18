@@ -8,6 +8,7 @@
 
 ## Security
 - Never hardcode credentials or include them in logs, fixtures, commits, URLs shared with others, or public artifacts.
+- User-approved exception: the browser-only login uses a fixed owner username and password digest as a convenience UI gate. Its bypassable session marker is not authentication; do not reuse this design for broker credentials or claim it makes Pages private.
 - Read pipeline secrets from environment variables/GitHub Actions secrets.
 - Preserve the live page's session-only credential entry: send credentials only to Upstox, clear inputs, and never persist or broadcast credentials.
 - Validate external inputs, timestamps, instrument identifiers, socket hosts, and binary payloads. Preserve secure authentication and the live page CSP.
@@ -18,7 +19,7 @@
 - Prefer focused patches over whole-file rewrites. Reuse existing implementations and keep responses concise.
 
 ## Workflow
-- Application implementation requires explicit user approval of [the development plan](docs/DEVELOPMENT_PLAN.md). Module 1's focused feed-reliability repair and publication are approved; other proposed modules remain unapproved.
+- Application implementation requires explicit user approval of [the development plan](docs/DEVELOPMENT_PLAN.md). Module 1 and the user's clarified Module 5 browser-only login are approved; other proposed modules remain unapproved.
 - Before application edits, verify the approved plan version and scope. Record the user's approval evidence in the plan; never mark approval based on silence or an agent's decision.
 - For complex tasks, make a short plan with modules and acceptance checks before editing. Plan approval covers the listed modules; do not request approval again for routine steps within that scope.
 - Complete and verify each module, then report meaningful progress.
@@ -64,6 +65,7 @@ Use the existing `.venv` Python when its dependencies are installed. Read the te
 .\.venv\Scripts\python -m unittest discover -s tests -q
 node --check app.js
 node --check live.js
+node tests/login.test.cjs
 node tests/dashboard.test.cjs
 node tests/live-feed.test.mjs
 node tests/live-viewer.test.mjs
