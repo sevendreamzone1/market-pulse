@@ -85,4 +85,4 @@ After each approved module, record its plan scope, status, affected files, relev
 - Storage events propagate logout and storage clearing to other tabs, resume an open login page after sign-in elsewhere, and reschedule expiry when the shared deadline changes.
 - Updated home/live/login copy and current architecture documentation. Broker authorization is still a separate connection step; this remains a bypassable browser UI gate, not private hosting.
 - Relevant login, dashboard, broker-decoder and live-viewer tests passed. The browser fixture proved one sign-in opens a new live tab directly and logout from live returns both tabs to login, including mobile layout checks.
-- Status: implementation and verification complete; publication pending.
+- Status: complete and published. [Deployment 44286718036](https://github.com/sevendreamzone1/market-pulse/actions/runs/44286718036) succeeded for commit `54ecdef`; the public shared-login script and home/live page copy were verified.
