@@ -4,10 +4,17 @@ export function renderLivePanel(container,rows,connected){
   container.replaceChildren();
   container.append(node('h2','Live CE / PE trade scenarios'));
   container.append(node('p',connected?'Live feed connected · levels below are research scenarios; no orders or fills are tracked.':'Connect Live API quotes in another tab and keep it open. Credentials stay in that tab.'));
+  const refresh=node('a','Open market-data refresh workflow');refresh.href='https://github.com/sevendreamzone1/market-pulse/actions/workflows/pages.yml';refresh.target='_blank';refresh.rel='noopener noreferrer';container.append(refresh);
+  container.append(node('p','Refresh data on this page only reloads the published snapshot. If analysis is stale, run the workflow above and check its result. An open socket alone does not establish fresh strategy data.'));
   const grid=node('div',undefined,'live-setup-grid');
   for(const row of rows){
     const card=node('article',undefined,'live-setup-card');
     card.append(node('h3',row.name),node('strong',row.state,'live-setup-state'),node('p',row.reason));
+    if(row.analysis_state){
+      const stamp=Date.parse(row.analysis_time);
+      const time=Number.isFinite(stamp)?new Intl.DateTimeFormat('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(stamp))+' IST':'Unavailable';
+      card.append(node('p','Strategy analysis: '+row.analysis_state+' · candle ended '+time));
+    }
     if(row.contract){
       card.append(node('p',`${row.contract} · ${row.expiry} · lot ${row.lot}`));
       const dl=node('dl',undefined,'live-setup-levels');

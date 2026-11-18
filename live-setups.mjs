@@ -46,7 +46,8 @@ export class LiveSetups {
     const clock=session(now);
     return Object.keys(indexKeys).map(ticker=>{
       const row=snapshot.options?.find(r=>r.ticker===ticker),p=row?.premium,key=indexKeys[ticker];
-      const base={ticker,name:indexNames[ticker],side:row?.side||'',state:'NO TRADE',reason:'Waiting for fresh strategy analysis.'};
+      const modelFresh=!!row&&ageOK(row.candle_end,600000,now);
+      const base={ticker,name:indexNames[ticker],side:row?.side||'',state:'NO TRADE',reason:'Waiting for fresh strategy analysis.',analysis_state:!row?'Missing':modelFresh?'Fresh':'Stale or invalid',analysis_time:row?.candle_end};
       let active=this.active.get(ticker);
       if(active?.exit&&row&&active.id!==[ticker,row.side,row.candle_end,row.entry,p?.instrument_key].join('|')){this.active.delete(ticker);active=null;}
       if(active){
@@ -58,9 +59,11 @@ export class LiveSetups {
         const depth=this.fresh(active.key,now);
         return {...base,...active,state:active.exit||(!fresh||!positive(depth?.bid)||!validModel?'MONITORING PAUSED':active.t1?'TARGET 1 HIT':'BUY '+active.side+' TRIGGERED'),reason:active.exit?'Observed scenario exit; no order or fill is tracked.':!fresh||!validModel?'Feed or strategy data is stale. Monitor your broker; no new entry.':'Live scenario monitoring. Targets and SL use option bid; levels remain fixed.',current:depth?.ltp,bid:depth?.bid,monitor:true};
       }
-      if(!connected)return {...base,reason:'Connect the live feed in this browser to monitor entries.'};
-      if(!clock.weekday||clock.minute<570||clock.minute>=885)return {...base,reason:'New entries only 09:30–14:45 IST, weekdays. Holidays are not checked.'};
-      if(!row||!ageOK(row.candle_end,600000,now))return {...base,reason:'Strategy candle is missing or over ten minutes old.'};
+      if(!row)return {...base,state:'WAIT FOR ANALYSIS',reason:'No strategy snapshot is available. Check the market-data refresh workflow.'};
+      if(!modelFresh)return {...base,state:'STALE ANALYSIS',reason:'The strategy candle is over ten minutes old or has an invalid timestamp. Refresh the market-data workflow; fresh live ticks alone cannot update strategy analysis.'};
+      if(row.status==='no_trade')return {...base,reason:row.reason||'Fresh strategy categories do not have enough directional agreement.'};
+      if(!connected)return {...base,state:'LIVE FEED DISCONNECTED',reason:'Strategy analysis is fresh, but the live tab is disconnected or its heartbeat expired. Connect Live API quotes and keep that tab open.'};
+      if(!clock.weekday||clock.minute<570||clock.minute>=885)return {...base,state:'OUTSIDE ENTRY WINDOW',reason:'New entries only 09:30–14:45 IST, weekdays. Holidays are not checked.'};
       if(row.status!=='conditional'||!['CE','PE'].includes(row.side))return {...base,reason:row.reason||'Strategy categories do not agree.'};
       const expected=row.side==='CE'?'Bullish':'Bearish';
       if(row.strategy_report?.consensus?.signal!==expected)return {...base,reason:'The full strategy report does not confirm this direction.'};
@@ -68,6 +71,7 @@ export class LiveSetups {
       const index=this.fresh(key,now);
       if(!index)return {...base,state:'WAIT FOR LIVE INDEX',reason:'Fresh live index updates are required.'};
       if(row.side==='CE'?index.ltp<=row.stop:index.ltp>=row.stop)return {...base,reason:'Underlying has invalidated the snapshot stop.'};
+      if(p?.status!=='available')return {...base,state:'WAIT FOR OPTION DATA',reason:p?.reason||'A usable option premium scenario is not available.'};
       if(p?.status!=='available'||!ageOK(p.fetched_at,300000,now)||p.side!==row.side||!/^\d{4}-\d{2}-\d{2}$/.test(p.expiry)||p.expiry<=clock.date||![p.stop,p.target1,p.atr14,p.tick_size_rupees,p.lot_size].every(positive))return {...base,reason:'A current matching contract, ATR stop, expiry, tick size and lot size are required.'};
       const option=this.fresh(p.instrument_key,now);
       if(!option||![option.bid,option.ask,option.bidQty,option.askQty,option.volume].every(positive)||option.bid>option.ask||(option.ask-option.bid)/option.ask>.05||Math.min(option.bidQty,option.askQty)<p.lot_size)return {...base,state:'WAIT FOR LIVE OPTION',reason:'Need live option bid/ask, spread ≤5%, traded volume and depth ≥one lot.'};

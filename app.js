@@ -26,6 +26,8 @@ function find(ticker){
   return {...item,price:quote.ltp,change_pct:quote.cp>0?(quote.ltp/quote.cp-1)*100:null,live:true,trade_time:new Date(quote.ltt).toISOString()};
 }
 globalThis.addEventListener?.('marketpulse-quotes',event=>{liveQuotes=new Map((event.detail||[]).filter(q=>q&&typeof q.key==='string').map(q=>[q.key,q]));render(true);});
+function publishSnapshot(){if(typeof CustomEvent==='function')globalThis.dispatchEvent?.(new CustomEvent('marketpulse-snapshot',{detail:demo?(previousSnapshot||{items:[]}):snapshot}));}
+globalThis.addEventListener?.('marketpulse-request-snapshot',publishSnapshot);
 function change(item){if(!Number.isFinite(item?.change_pct))return '<span>Change unavailable</span>';const positive=item.change_pct>=0;return `<span class="${positive?'positive':'negative'}">${positive?'↗ +':'↘ '}${item.change_pct.toFixed(2)}% <span class="muted">vs prev. close</span></span>`;}
 function tick(){
   $('clock').textContent = new Intl.DateTimeFormat('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date())+' IST';
@@ -70,8 +72,9 @@ function renderOptions(){
     const row=rows.find(r=>r.ticker===index.ticker),item=find(index.ticker);
     const age=Date.now()-Date.parse(row?.candle_end),valid=demo||(Number.isFinite(age)&&age>=0&&age<=600000);
     if(!row||!open||!valid||row.status!=='conditional'){
-      const message=!open?'No new entry outside 09:30–14:45 IST.':!row?'Waiting for the next analysis snapshot.':!valid?'Index data is over 10 minutes old or unavailable; no entry or target levels shown.':row.reason;
-      return `<article class="panel option-card"><div class="signal-top"><h2>${index.name}</h2><span class="pill">${demo?'DEMO · ':''}NO TRADE</span></div><p class="signal-rule">${escape(message)}</p>${strategyMarkup(row?.strategy_report)}<div class="signal-time">Index candle ended ${dateTime(row?.candle_end)}</div></article>`;
+      const message=!row?'Waiting for the next analysis snapshot.':!valid?'Strategy analysis is stale or has an invalid timestamp. Entry levels are withheld. Run the market-data refresh workflow; live ticks cannot refresh strategy categories.':!open?'No new entry outside 09:30–14:45 IST.':row.reason;
+      const label=!row?'WAIT FOR ANALYSIS':!valid?'STALE ANALYSIS':!open?'OUTSIDE ENTRY WINDOW':'NO TRADE';
+      return `<article class="panel option-card"><div class="signal-top"><h2>${index.name}</h2><span class="pill">${demo?'DEMO · ':''}${label}</span></div><p class="signal-rule">${escape(message)}</p>${valid?strategyMarkup(row?.strategy_report):''}<div class="signal-time">Index candle ended ${dateTime(row?.candle_end)}</div></article>`;
     }
     const call=row.side==='CE',premium=row.premium,quoteAge=Date.now()-Date.parse(premium?.fetched_at);
     const quoted=!demo&&premium?.status==='available'&&Number.isFinite(quoteAge)&&quoteAge>=0&&quoteAge<=300000;
@@ -114,7 +117,7 @@ async function refresh(){
   if(refreshing||demo)return;refreshing=true;$('refresh').disabled=true;
   try {const response=await fetch(new URL('./data/market.json?v='+Date.now(),import.meta.url),{cache:'no-store',signal:AbortSignal.timeout(15000)});if(!response.ok)throw new Error('HTTP '+response.status);const result=await response.json();if(!Array.isArray(result.items))throw new Error('Invalid snapshot format');if(demo)return;snapshot=result;}
   catch(error){if(!demo)snapshot={...snapshot,loadError:error.message};}
-  finally{refreshing=false;$('refresh').disabled=demo;render();}
+  finally{refreshing=false;$('refresh').disabled=demo;render();publishSnapshot();}
 }
 function makeDemo(){return {generated_at:null,items:[...universe,...indices].map((stock,i)=>{const price=[1282.4,3548.2,1712.6,1835.8,1280.5,1623.7,825.3,441.8,24850.4,53124.5,81530.8][i];const signal=['Bullish','Bearish','Neutral'][i%3];return {...stock,price,change_pct:[1.24,-.78,.31][i%3],candle_end:'2025-01-06T04:30:00+00:00',ema9:price*(signal==='Bullish'?1.001:.998),ema21:price, rsi14:[58.4,43.2,75.1][i%3],signal,reason:signal==='Bullish'?'EMA 9 is above EMA 21; RSI 14 is between 50 and 70. Upward momentum setup.':signal==='Bearish'?'EMA 9 is below EMA 21; RSI 14 is between 30 and 50. Downward momentum setup.':'Trend and momentum do not meet either directional rule. Wait for alignment.',recent_closes:Array.from({length:20},(_,n)=>price*(1+Math.sin(n*.7)*.002+(n-20)*.0002))};})};}
 $('symbol-select').innerHTML=universe.map(stock=>`<option value="${stock.symbol}">${stock.symbol} · ${stock.name}</option>`).join('');

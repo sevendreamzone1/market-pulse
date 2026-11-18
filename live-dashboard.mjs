@@ -1,13 +1,14 @@
 import {renderLivePanel} from './live-panel.mjs';
-import {indexNames} from './live-setups.mjs';
+import {LiveSetups} from './live-setups.mjs';
 const panel=document.getElementById('live-setups');
-let last=null,received=0,source=null;
-const empty=()=>Object.entries(indexNames).map(([ticker,name])=>({ticker,name,state:'NO LIVE ENTRY',reason:'Waiting for your connected live-feed tab.'}));
+let last=null,received=0,source=null,snapshot={items:[],options:[]};
+const offline=new LiveSetups();
 function render(){
   const connected=last?.connected&&Date.now()-received<=5000&&Date.now()-last.sentAt<=5000;
-  renderLivePanel(panel,connected?last.rows:empty(),connected);
+  renderLivePanel(panel,connected?last.rows:offline.evaluate(snapshot,false),connected);
   globalThis.dispatchEvent(new CustomEvent('marketpulse-quotes',{detail:connected?last.quotes:[]}));
 }
+globalThis.addEventListener('marketpulse-snapshot',event=>{if(event.detail&&Array.isArray(event.detail.items)){snapshot=event.detail;render();}});
 if('BroadcastChannel' in globalThis){
   const channel=new BroadcastChannel('marketpulse-live-v1');
   channel.onmessage=({data})=>{
@@ -17,4 +18,4 @@ if('BroadcastChannel' in globalThis){
   };
   globalThis.addEventListener('pagehide',()=>channel.close());
 }
-render();setInterval(render,1000);
+render();globalThis.dispatchEvent(new CustomEvent('marketpulse-request-snapshot',{detail:null}));setInterval(render,1000);

@@ -30,15 +30,17 @@ assert.equal(get(e,snapshot(),true,end+31000).state,'MONITORING PAUSED');
 assert.equal(get(e,snapshot(),true,end+1800000).state,'TIME EXIT');
 e=ready();get(e);const reverse=snapshot('PE');assert.equal(get(e,reverse).state,'CONFLUENCE LOST');
 e=ready();e.ingest([option(60,61,end)],1,end);assert.equal(get(e).state,'NO TRADE','do not chase premiums past first target');
-e=ready();let s=snapshot();s.options[0].candle_end=new Date(end-600001).toISOString();assert.equal(get(e,s).state,'NO TRADE');
+e=ready();let s=snapshot();s.options[0].candle_end=new Date(end-600001).toISOString();assert.equal(get(e,s).state,'STALE ANALYSIS');
 s=snapshot();s.options[0].premium.fetched_at=new Date(end-300001).toISOString();assert.equal(get(e,s).state,'NO TRADE');
 s=snapshot();s.options[0].premium.expiry='2026-11-17';assert.equal(get(e,s).state,'NO TRADE');
 s=snapshot();s.options[0].strategy_report.consensus.signal='Neutral';assert.equal(get(e,s).state,'NO TRADE');
 for(const bad of [option(40,50,end),option(51,50,end),{...option(49,50,end),askQty:1},{...option(49,50,end),ltt:end-31000}]){
   e=ready();e.quotes.delete('NSE_FO|fixture');e.ingest([bad],1,end);assert.equal(get(e).state,'WAIT FOR LIVE OPTION');
 }
-e=ready();assert.equal(get(e,snapshot(),false).state,'NO TRADE');
-assert.equal(get(e,snapshot(),true,Date.parse('2026-11-17T10:00:00Z')).state,'NO TRADE');
+e=ready();assert.equal(get(e,snapshot(),false).state,'LIVE FEED DISCONNECTED');
+assert.equal(get(e,snapshot(),true,Date.parse('2026-11-17T10:00:00Z')).state,'STALE ANALYSIS');
+const outside=snapshot();outside.options[0].candle_end='2026-11-17T10:00:00Z';
+assert.equal(get(e,outside,true,Date.parse('2026-11-17T10:00:00Z')).state,'OUTSIDE ENTRY WINDOW');
 e=new LiveSetups();e.ingest([index(101,end),option(49,50,end)],0,end);assert.equal(get(e).state,'WAIT FOR LIVE INDEX','initial feed cannot authorize entry');
 e=new LiveSetups();e.ingest([index(101,end),option(49,50,end)],1,end);assert.equal(get(e).state,'WATCH CE','first partial candle cannot confirm');
 e=new LiveSetups();
@@ -48,4 +50,14 @@ e=new LiveSetups();for(const now of [start,start+60000,end])e.ingest([index(101,
 assert.equal(get(e).state,'WATCH CE','gaps cannot confirm');
 e=ready();e.ingest([index(80,end-10000)],1,end);assert.equal(e.quotes.get(indexKeys['^NSEI']).ltp,101,'ignore out of order');
 e.clear();assert.equal(e.quotes.size,0);assert.equal(e.active.size,0);
+e=ready();s=snapshot();s.options[0].candle_end=new Date(start-86400000).toISOString();
+assert.equal(get(e,s).state,'STALE ANALYSIS','fresh ticks cannot make a previous-session strategy model usable');
+assert.equal(get(e,s).analysis_state,'Stale or invalid');assert.equal(e.active.size,0);
+assert.equal(get(e,snapshot()).state,'BUY CE TRIGGERED','a fresh recovered model can confirm only after the existing full-candle and liquidity gates');
+e=ready();s=snapshot();s.options[0].status='no_trade';s.options[0].reason='Current categories conflict.';
+assert.equal(get(e,s).state,'NO TRADE');assert.equal(get(e,s).analysis_state,'Fresh');
+assert.equal(get(e,s,false).state,'NO TRADE','a fresh neutral analysis is identifiable separately from socket state');
+e=ready();s=snapshot();s.options[0].premium={status:'unavailable',reason:'Premium risk is invalid.'};
+assert.equal(get(e,s).state,'WAIT FOR OPTION DATA');assert.match(get(e,s).reason,/risk is invalid/);
+assert.equal(get(e,{items:[],options:[]}).state,'WAIT FOR ANALYSIS');
 console.log('Live setups passed: CE/PE, completed candles, no initial/partial/gapped entry, fresh depth, anti-chase, frozen risk, bid exits, latched targets/SL, time and confluence exits.');

@@ -41,6 +41,18 @@ Before confirmation, WATCH CE/PE displays changing ask references. Confirmation 
 
 This is live **confirmation and monitoring of the full strategy snapshot**, not recalculation of every indicator on every tick. Strategy/OI/Greeks context still refreshes through GitHub Actions; completed-candle data, broker entitlements and browser connectivity determine availability. No validated win rate is claimed.
 
+## Why a recommendation may be missing
+
+The shared live panel and CE/PE tab distinguish stale data from market neutrality:
+
+- **WAIT FOR ANALYSIS:** no strategy snapshot has loaded yet.
+- **STALE ANALYSIS:** the model candle is over ten minutes old or its timestamp is invalid. Fresh live ticks cannot make that model current.
+- **LIVE FEED DISCONNECTED:** a directional model is fresh, but live confirmation is not connected or its tab heartbeat expired.
+- **NO TRADE:** fresh categories do not support an entry, or a later risk gate rejects the setup. Read the reason; this is not a promise that a trade will appear.
+- **WAIT FOR OPTION DATA / WAIT FOR LIVE OPTION:** the model needs usable premium risk metadata or fresh option depth before confirmation.
+
+Each live card shows its strategy candle time. If analysis is stale, use **Open market-data refresh workflow**, run the existing workflow and inspect its result. The dashboard's Refresh data button only reloads published JSON; it cannot trigger an upstream broker refresh. The main dashboard can diagnose the loaded model without a connected live tab and without a second snapshot poll. GitHub's scheduled refresh can be delayed, and manual refresh can still fail if upstream credentials/access are invalid. A configured provider or open socket is not proof of fresh data.
+
 ## Strategy-based CE / PE recommendations
 
 The second tab evaluates the complete requested catalog, with the exact rule and measurements shown per indicator. It uses **completed five-minute candles**, not live ticks. GitHub Pages cannot run a continuous stream-processing backend. Scheduled Actions refresh the analysis and the browser reads the latest published snapshot. The UI does not label these snapshots as tick-live.
